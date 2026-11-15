@@ -1,0 +1,1065 @@
+<title>Wooden Binary Counter</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: one workbench stage (3D model) with a control strip and a readout beneath, notes below. */
+:root {
+  --bg: #e8ebee;          /* lab-wall grey, a touch blue */
+  --surface: #f5f6f7;
+  --fg: #1c2126;
+  --muted: #5b646d;
+  --line: #c9cfd5;
+  --accent: #a3471b;      /* scorched pine */
+  --accent-fg: #ffffff;
+  --wood: #e2bd80; --wood-edge: #b88a4a; --burn: #4a2410; --walnut: #5a3520; --brass: #c9a24f;
+  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15191d; --surface: #1d2227; --fg: #e6e9ec; --muted: #9aa3ac;
+    --line: #2f363d; --accent: #e08a52; --accent-fg: #1a0d05; color-scheme: dark;
+    --wood: #b98c4f; --wood-edge: #8a6230; --burn: #2e1407; --walnut: #2c170b; --brass: #c9a24f;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15191d; --surface: #1d2227; --fg: #e6e9ec; --muted: #9aa3ac;
+  --line: #2f363d; --accent: #e08a52; --accent-fg: #1a0d05; color-scheme: dark;
+    --wood: #b98c4f; --wood-edge: #8a6230; --burn: #2e1407; --walnut: #2c170b; --brass: #c9a24f;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; font-size: 14px; }
+.stage {
+  position: relative; width: 100%; aspect-ratio: 16 / 8.2; max-height: 66vh; max-width: 100%;
+  border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface);
+  cursor: grab; touch-action: none;
+}
+.stage:active { cursor: grabbing; }
+.stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.stage canvas { display: block; width: 100%; height: 100%; }
+.hint { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--muted); font-family: var(--mono); pointer-events: none; }
+.panel { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; justify-content: space-between; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: 500 14px var(--body); padding: 9px 16px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--fg); cursor: pointer;
+}
+button:hover { border-color: var(--muted); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.readout { display: flex; gap: 28px; align-items: baseline; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.readout div { display: grid; gap: 2px; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.val { font-family: var(--mono); font-size: 22px; font-weight: 500; }
+.bits { letter-spacing: 0.12em; }
+.bits .nib { margin-right: 0.45em; }
+.status { font-family: var(--mono); font-size: 13px; color: var(--muted); min-height: 1.5em; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px 32px; border-top: 1px solid var(--line); padding-top: 20px; }
+.notes section { min-width: 0; }
+.notes h2 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 6px; }
+.notes p { margin: 0; color: var(--muted); max-width: 65ch; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.titles { display: grid; gap: 4px; min-width: 0; }
+.tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: 6px; padding: 3px; background: var(--surface); }
+.tabs a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: 14px; padding: 6px 12px; border-radius: 4px; }
+.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent-fg); }
+.view { display: grid; gap: 20px; }
+.cta { margin: 0; font-weight: 500; }
+.build { gap: 32px; }
+.build section { min-width: 0; }
+.build h2.big { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px); margin: 0 0 8px; }
+.build h3 { font-family: var(--display); font-weight: 500; font-size: 19px; margin: 0 0 10px; }
+.build h4 { font-family: var(--display); font-weight: 500; font-size: 16px; margin: 0 0 4px; }
+.build p, .build li { max-width: 68ch; }
+.build p { margin: 0 0 10px; }
+.build .meta { color: var(--muted); font-size: 14px; }
+.build ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 40px; }
+.two > div { min-width: 0; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; }
+tbody tr:last-child td { border-bottom: 0; }
+td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.n { text-align: right; }
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; gap: 22px; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 36px 1fr; gap: 0 14px; }
+.steps > li::before { content: counter(step); font-family: var(--mono); font-weight: 500; color: var(--accent); border: 1px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center; font-size: 13px; }
+.steps > li > * { grid-column: 2; }
+.steps > li > h4 { grid-row: 1; align-self: center; }
+.tabs { flex-wrap: wrap; }
+.build, .prompts { --paper: #ffffff; --ink: #16191c; --f1: #f1f1ee; --f2: #dcdcd7; --d1: #7a5a44; --d2: #5f4332; --d3: #4a3426; --b1: #e3cf9a; --b2: #c9ae6a; --burnc: #5a2a10; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .build, :root:not([data-theme="light"]) .prompts { --paper: #1b1f23; --ink: #e8ebee; --f1: #252a30; --f2: #30363d; --d1: #6b4a34; --d2: #563a28; --d3: #45301f; --b1: #8f7a44; --b2: #7a6638; --burnc: #e0a46a; } }
+:root[data-theme="dark"] .build, :root[data-theme="dark"] .prompts { --paper: #1b1f23; --ink: #e8ebee; --f1: #252a30; --f2: #30363d; --d1: #6b4a34; --d2: #563a28; --d3: #45301f; --b1: #8f7a44; --b2: #7a6638; --burnc: #e0a46a; }
+.build svg { overflow: visible; max-width: 100%; height: auto; }
+.build svg polygon, .build svg path, .build .tool rect { stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
+.build .wt { fill: var(--paper); } .build .wf { fill: var(--f1); } .build .ws { fill: var(--f2); }
+.build .dt, .build .df { fill: var(--d1); } .build .dt { fill: var(--d1); } .build .ds { fill: var(--d3); }
+.build svg .df { fill: var(--d2); }
+.build .bt { fill: var(--b1); } .build .bf, .build .bs { fill: var(--b2); }
+.build .hole { fill: var(--ink); stroke: none !important; }
+.build .peg { fill: var(--ink); } .build .pin { fill: var(--b1); }
+.build .burn { fill: none; stroke: var(--burnc) !important; stroke-width: 2.6 !important; }
+.build .burnl { stroke: var(--burnc); stroke-width: 2.6; stroke-linecap: round; }
+.build .engr { fill: var(--burnc); font-family: Georgia, serif; font-weight: 700; }
+.build .cut { stroke: var(--ink); stroke-width: 1.1; stroke-dasharray: 5 4; }
+.build .hidden { stroke: var(--ink); stroke-width: 0.9; stroke-dasharray: 9 3 2 3; }
+.build .dl, .build .dk { stroke: var(--ink); stroke-width: 0.9; }
+.build .arrow { stroke: var(--ink); stroke-width: 2.4; fill: none; stroke-linecap: round; }
+.build .ah { fill: var(--ink); stroke-width: 0.5; }
+.build text { fill: var(--ink); }
+.build svg text.t, .build svg text.dt { font: 500 12.5px var(--mono); }
+.build svg text.val { font: 700 12px var(--mono); }
+.build svg text.qty { font: 700 22px var(--display); }
+.build .tag circle { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
+.build .tag text { font: 700 13px var(--display); }
+.build .mark circle { fill: var(--paper); stroke-width: 2; } .build .mark path { fill: none; stroke-width: 3; stroke-linecap: round; }
+.build .mark.ok circle, .build .mark.ok path { stroke: #2f8a4a; } .build .mark.no circle, .build .mark.no path { stroke: #c0392b; }
+.partsheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.part { background: var(--paper); padding: 14px 12px 12px; display: grid; grid-template-rows: 112px auto auto; gap: 6px; justify-items: center; text-align: center; min-width: 0; }
+.part .pic { display: grid; place-items: center; width: 100%; height: 112px; }
+.part .pic svg { max-height: 112px; width: auto; }
+.pid { display: flex; gap: 8px; align-items: center; }
+.letter { display: inline-grid; place-items: center; width: 24px; height: 24px; border: 1.6px solid var(--ink); border-radius: 50%; font: 700 13px var(--display); color: var(--ink); background: var(--paper); }
+.letter.sm { width: 20px; height: 20px; font-size: 12px; }
+.qty { font: 700 18px var(--display); color: var(--ink); }
+.pname { font-size: 12.5px; color: var(--muted); }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; }
+.tool { display: flex; align-items: center; gap: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px 8px 8px; font-size: 13px; }
+.tool svg path, .tool svg rect { fill: var(--paper); }
+.tool svg line { stroke: var(--ink); stroke-width: 1.6; }
+.tool svg .thin { stroke-width: 1; fill: none; }
+.tool svg .dots circle { fill: var(--ink); }
+.ikea { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 16px; }
+.ikea > li { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 14px; min-width: 0; }
+.ikea .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.ikea .num { font: 700 46px/0.9 var(--display); color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--ink); border-radius: 4px; padding: 3px 8px 3px 4px; font: 700 14px var(--display); color: var(--ink); }
+.figs { display: flex; flex-wrap: wrap; gap: 18px 24px; justify-content: center; align-items: center; min-width: 0; }
+.ikea h4 { margin: 0 0 2px; }
+.ikea .cap { margin: 0; font-size: 14px; color: var(--muted); }
+.promptlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: pr; }
+.promptlist > li { counter-increment: pr; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+.promptlist > li::before { content: counter(pr); grid-row: span 3; font: 700 28px/1 var(--display); color: var(--accent); }
+.promptlist > li > * { grid-column: 2; }
+.promptlist blockquote { margin: 0; font: 500 15px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.promptlist .att { margin: 4px 0 0; font-size: 13px; color: var(--muted); font-style: italic; }
+.promptlist .res { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.prompts .intro p { max-width: 68ch; margin: 0; color: var(--muted); }
+.prompts h2.big { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px); margin: 0 0 8px; }
+kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; }
+@media (max-width: 560px) { .stage { aspect-ratio: 4 / 3; } .val { font-size: 18px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="titles">
+      <h1>Wooden Binary Counter</h1>
+      <p class="sub">After the eight-bit pine counter Alan Donohoe demonstrates in <a href="https://www.instagram.com/reels/DfU1AMuv1Cz/" target="_blank" rel="noopener">this reel on Instagram</a>.</p>
+    </div>
+    <nav class="tabs" aria-label="Views">
+      <a href="#model" id="tab-model">Model</a>
+      <a href="#build" id="tab-build">Build your own</a>
+      <a href="#prompts" id="tab-prompts">Prompts used</a>
+    </nav>
+  </header>
+
+  <div id="view-model" class="view">
+
+  <div class="stage" id="stage" tabindex="0" aria-label="3D model of an eight-bit wooden binary counter. Press Space to push the right-hand block.">
+    <span class="hint">click right block to push · click others to flip by hand · drag to turn</span>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <button class="primary" id="push">Push +1</button>
+      <button id="auto" aria-pressed="false">Count continuously</button>
+      <button id="reset">Reset to zero</button>
+      <button id="view">Front view</button>
+    </div>
+    <div class="readout" aria-live="polite">
+      <div><span class="label">Binary</span><span class="val bits" id="bin">0000 0000</span></div>
+      <div><span class="label">Decimal</span><span class="val" id="dec">0</span></div>
+      <div><span class="label">Hex</span><span class="val" id="hex">00</span></div>
+    </div>
+  </div>
+  <div class="status" id="status">Ready. Press <kbd>Space</kbd> to push.</div>
+
+  <div class="notes">
+    <section>
+      <h2>The blocks</h2>
+      <p>Eight flat pine blocks, cut like dice, each with its place value (1 to 128) burnt into the top and bottom edges, hang on a common dowel between two end posts. Each has a pokerwork 0 on the front and a 1 on the back, and every push turns a block half a turn over the top. Every 1 face except the leftmost carries a small walnut gate on a pin.</p>
+    </section>
+    <section>
+      <h2>The gate</h2>
+      <p>With the 1 at the back, the gate's pin is near the bottom, so gravity lets it hang down along the face, out of the way. Turn the block over and the pin is near the top: the gate stands up, topples left onto its stop peg and locks across the front of the next block.</p>
+    </section>
+    <section>
+      <h2>The carry</h2>
+      <p>Push a 1 and, as it turns over, the locked gate sweeps up over the top edge of the next block and takes it round too. If that block was also a 1, its own gate does the same to the next, which is why 0111 1111 to 1000 0000 ripples along the whole row.</p>
+    </section>
+    <section>
+      <h2>Counting</h2>
+      <p>Eight bits count from 0 to 255. One more push turns every block back to 0 and the carry falls off the left end, which is overflow you can watch happen.</p>
+    </section>
+  </div>
+  <p class="cta"><a href="#build">Build a real one: parts list and instructions →</a></p>
+  </div>
+
+  <article id="view-build" class="view build" hidden>
+    <section class="intro">
+      <h2 class="big">Build your own</h2>
+      <p>These steps make the counter in the model: eight pine blocks on a dowel, each with a walnut gate that drops into place when the block shows 1. The finished piece is 431 mm long, 127 mm tall and 75 mm deep. Allow a weekend. All sizes are in millimetres and come from the model, so drill one test block and check the gate works before doing all seven.</p>
+      <p class="meta">Original: Alan Donohoe's counter, <a href="https://www.instagram.com/reels/DfU1AMuv1Cz/" target="_blank" rel="noopener">Instagram reel</a>.</p>
+    </section>
+
+    <section>
+      <h3>Parts</h3>
+      <div class="partsheet" id="parts"></div>
+    </section>
+
+    <section>
+      <h3>Tools</h3>
+      <div class="tools" id="tools"></div>
+    </section>
+
+    <section>
+      <h3>Steps</h3>
+      <ol class="ikea" id="steps"></ol>
+    </section>
+
+    <section class="two">
+      <div>
+        <h3>If something sticks</h3>
+        <ul>
+          <li><strong>A gate doesn't drop.</strong> It's binding on its pin. Open the hole slightly or ease the washer. Check the lean peg leaves it leaning left.</li>
+          <li><strong>The carry slips off.</strong> Not enough gate reaches the next block. Move the pin 1 to 2 mm further left or make the gate longer.</li>
+          <li><strong>One block drags its neighbour.</strong> Too much friction between them. Wax the faces and use a thinner washer.</li>
+          <li><strong>Blocks swing past 0 or 1.</strong> The axle hole is off-centre or too loose. A slightly tighter washer stack adds friction.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Finishing</h3>
+        <p>Sand to 240, then use Danish oil or clear wax. Keep finish off the axle holes, the pins and the faces the gates slide over, or the action gets sticky. Wax the axle once the finish is dry.</p>
+        <p class="cta"><a href="#model">← Back to the model</a></p>
+      </div>
+    </section>
+  </article>
+
+  <article id="view-prompts" class="view prompts" hidden>
+    <section class="intro">
+      <h2 class="big">Prompts used</h2>
+      <p>This page was made in one Claude Code session. These are the prompts, word for word and in order, with a note on what each one changed. Screenshots attached to a prompt are noted but not reproduced.</p>
+    </section>
+    <ol class="promptlist">
+      <li>
+        <blockquote>can you make a faithful reproduction of this mechanical wooden binary counter? [Image #1] [Image #2] [Image #3] from Alan Donohoe?</blockquote>
+        <p class="att">3 screenshots from the video: the counter at 0000 0000, 0000 1111 and 0001 0000.</p>
+        <p class="res">Built the first 3D model: eight pine blocks on an axle, burnt digits, walnut tabs and a rippling carry, with push, auto-count and reset controls.</p>
+      </li>
+      <li>
+        <blockquote>the little swing gates should be on the '1' faces, and should drop down to lock in place when the dial is turned.[Image #4] - the cubes should not be cubes, but 'dice' style rectangles. So when the 1 is on the back, the lcoking mechanism is 'down' (so gravity causes it to be open), then when it's the other way up, it is 'up', meaning gravity forces it to drop into place!</blockquote>
+        <p class="att">1 screenshot: the counter at 0000 0111, gates standing on the 1 blocks.</p>
+        <p class="res">Changed the blocks to flat slabs that turn half a turn, moved the gates onto the 1 faces and gave them gravity, with two stop pegs.</p>
+      </li>
+      <li>
+        <blockquote>Then also add a 'Build your own' page that will give a walktrhough./parts list / instruction son how to construct a real version. And link to the original https://www.instagram.com/reels/DfU1AMuv1Cz/</blockquote>
+        <p class="res">Added the Build your own view with a cutting list, hardware, tools and written steps, and linked the original reel.</p>
+      </li>
+      <li>
+        <blockquote>each step in the build your own could be more visual. Maybe more ikea style?</blockquote>
+        <p class="res">Redrew the guide as line drawings: a lettered parts sheet with quantities, tool icons, and a numbered drawing for every step with dimensions and arrows.</p>
+      </li>
+      <li>
+        <blockquote>add a page to the site for 'Prompts used' and document all of the prompts I've used for this process please.</blockquote>
+        <p class="res">Added this page.</p>
+      </li>
+      <li>
+        <blockquote>Maybe add the binary value on the top and bottom of each 'domino' too, (1,2,4,8,16,etc) so the user can see what value they're adding?</blockquote>
+        <p class="res">Burnt each block's place value, 1 to 128, into its top and bottom edges, so it reads on top whichever way up the block is. Added the same to the build guide.</p>
+      </li>
+    </ol>
+    <p class="cta"><a href="#model">← Back to the model</a></p>
+  </article>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+  // ---------- dimensions (cm) ----------
+  const N = 8, W = 4.6, H = 6, D = 2.6, GAP = 0.3, PITCH = W + GAP;
+  const AXLE_Y = 8.8, BASE_T = 1.6, POST_W = 1.8;
+  const SPAN = N * PITCH - GAP;               // width taken by the blocks
+  const INNER = SPAN + 0.6;                    // clear space between the posts
+  const POST_X = INNER / 2 + POST_W / 2;
+  const POST_H = AXLE_Y + H / 2 + 0.9;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DUR = reduceMotion ? 120 : 300;
+
+  // ---------- seeded random ----------
+  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+
+  // ---------- textures ----------
+  function woodCanvas(w, h, seed, base, dark) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d'), r = rng(seed);
+    g.fillStyle = base; g.fillRect(0, 0, w, h);
+    // broad colour drifts
+    for (let i = 0; i < 6; i++) {
+      const x = r() * w, gr = g.createLinearGradient(x - w * 0.3, 0, x + w * 0.3, 0);
+      gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, `rgba(${dark},${0.05 + r() * 0.07})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    }
+    // grain lines running vertically
+    const lines = 46 + Math.floor(r() * 20), phase = r() * 10, amp = 4 + r() * 10;
+    for (let i = 0; i < lines; i++) {
+      const x0 = (i / lines) * w + r() * 6, a = 0.04 + r() * 0.14;
+      g.strokeStyle = `rgba(${dark},${a})`; g.lineWidth = 0.6 + r() * 2.2;
+      g.beginPath();
+      for (let y = 0; y <= h; y += 8) {
+        const x = x0 + Math.sin(y / h * 3 + phase + i * 0.05) * amp + Math.sin(y / 37 + i) * 1.2;
+        y ? g.lineTo(x, y) : g.moveTo(x, y);
+      }
+      g.stroke();
+    }
+    // a knot now and then
+    if (r() < 0.35) {
+      const kx = r() * w, ky = r() * h, kr = 6 + r() * 10;
+      for (let k = 5; k > 0; k--) { g.strokeStyle = `rgba(${dark},${0.12 + 0.05 * k})`; g.lineWidth = 1.4; g.beginPath(); g.ellipse(kx, ky, kr * k * 0.5, kr * k, 0, 0, Math.PI * 2); g.stroke(); }
+    }
+    return { c, g };
+  }
+  function scorchEdges(g, w, h, strength) {
+    const e = Math.min(w, h) * 0.16;
+    const sides = [
+      [0, 0, e, 0, 0, 0, e, h], [w, 0, w - e, 0, w - e, 0, e, h],
+      [0, 0, 0, e, 0, 0, w, e], [0, h, 0, h - e, 0, h - e, w, e]
+    ];
+    for (const [x0, y0, x1, y1, rx, ry, rw, rh] of sides) {
+      const gr = g.createLinearGradient(x0, y0, x1, y1);
+      gr.addColorStop(0, `rgba(70,35,12,${strength})`); gr.addColorStop(1, 'rgba(70,35,12,0)');
+      g.fillStyle = gr; g.fillRect(rx, ry, rw, rh);
+    }
+  }
+  function burnStroke(g, draw, lw) {
+    g.save(); g.lineCap = 'round';
+    g.strokeStyle = 'rgba(90,40,10,0.35)'; g.lineWidth = lw * 2.1; g.filter = 'blur(6px)'; draw(); g.stroke();
+    g.filter = 'blur(1.2px)'; g.strokeStyle = '#4a2410'; g.lineWidth = lw; draw(); g.stroke();
+    g.filter = 'none'; g.strokeStyle = 'rgba(25,10,3,0.75)'; g.lineWidth = lw * 0.45; draw(); g.stroke();
+    g.restore();
+  }
+  const PINE = '#d6a75e', PINE_DARK = '96,55,18';
+  function tex(c) { const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t; }
+  function faceTex(seed, digit) {
+    const w = 368, h = 480, { c, g } = woodCanvas(w, h, seed, PINE, PINE_DARK);
+    scorchEdges(g, w, h, 0.38);
+    const lw = w * 0.075;
+    if (digit === 0) burnStroke(g, () => { g.beginPath(); g.ellipse(w / 2, h / 2, w * 0.22, h * 0.31, 0, 0, Math.PI * 2); }, lw);
+    if (digit === 1) burnStroke(g, () => { g.beginPath(); g.moveTo(w / 2, h * 0.2); g.lineTo(w / 2, h * 0.8); }, lw);
+    return tex(c);
+  }
+  // place value burnt into the top and bottom edges; both read from the front when on top
+  function valueTex(seed, n) {
+    const w = 368, h = 208, { c, g } = woodCanvas(w, h, seed, PINE, PINE_DARK);
+    scorchEdges(g, w, h, 0.3);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `700 ${n > 99 ? 112 : 128}px Georgia, "Times New Roman", serif`;
+    g.filter = 'blur(5px)'; g.fillStyle = 'rgba(90,40,10,0.4)'; g.fillText(String(n), w / 2, h / 2 + 6);
+    g.filter = 'blur(0.8px)'; g.fillStyle = '#4a2410'; g.fillText(String(n), w / 2, h / 2 + 6);
+    g.filter = 'none';
+    return tex(c);
+  }
+  function plainTex(seed, w = 256, h = 256, base = PINE, dark = PINE_DARK, edge = 0.3) {
+    const { c, g } = woodCanvas(w, h, seed, base, dark); if (edge) scorchEdges(g, w, h, edge); return tex(c);
+  }
+  function longTex(seed, base = PINE, dark = PINE_DARK) {
+    // grain runs along the length: draw vertical then rotate the texture
+    const t = plainTex(seed, 256, 1024, base, dark, 0.18);
+    t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; return t;
+  }
+
+  // ---------- renderer / scene ----------
+  const stage = document.getElementById('stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.setClearColor(0x000000, 0);
+  stage.prepend(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 2, 1, 600);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, AXLE_Y - 2.4, 0);
+  controls.enableDamping = true; controls.enablePan = false;
+  controls.minDistance = 30; controls.maxDistance = 220;
+  controls.maxPolarAngle = Math.PI * 0.62;
+
+  scene.add(new THREE.HemisphereLight(0xfff4e6, 0x6b6f75, 0.75));
+  const key = new THREE.DirectionalLight(0xfff1dc, 0.85);
+  key.position.set(-18, 40, 34); key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -32, right: 32, top: 26, bottom: -12, near: 5, far: 120 });
+  key.shadow.bias = -0.0006; key.shadow.radius = 3;
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.3); fill.position.set(26, 10, 20); scene.add(fill);
+
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.ShadowMaterial({ opacity: 0.22 }));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+  const std = (map, rough = 0.78) => new THREE.MeshStandardMaterial({ map, roughness: rough, metalness: 0 });
+  function box(w, h, d, mats, x, y, z) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats);
+    m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; return m;
+  }
+
+  // ---------- frame ----------
+  const frame = new THREE.Group(); scene.add(frame);
+  const baseLen = INNER + POST_W * 2;
+  const baseMat = std(longTex(11));
+  const BASE_D = 7.5;
+  frame.add(box(baseLen, BASE_T, BASE_D, baseMat, 0, BASE_T / 2, 0));
+  frame.add(box(INNER, 0.9, 0.9, std(longTex(12)), 0, BASE_T + 0.45, BASE_D / 2 - 0.45));   // front lip of the tray
+  for (const s of [-1, 1]) {
+    const endMat = std(plainTex(20 + s, 128, 512, PINE, PINE_DARK, 0.22));
+    const post = box(POST_W, POST_H, 4.2, endMat, s * POST_X, POST_H / 2, 0);
+    frame.add(post);
+    // dowel end showing through the post
+    const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, POST_W + 0.3, 20), std(null, 0.6));
+    peg.material.color.set(0x8a5a2b); peg.rotation.z = Math.PI / 2; peg.position.set(s * POST_X, AXLE_Y, 0);
+    frame.add(peg);
+  }
+  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, INNER, 16), std(null));
+  axle.material.color.set(0x9a6a36); axle.rotation.z = Math.PI / 2; axle.position.y = AXLE_Y; frame.add(axle);
+
+  // ---------- blocks ----------
+  // i = 0 is the least significant bit (right-hand end). Gates fall to the left, toward bit i+1.
+  // Each block is a flat slab: 0 on the front, 1 on the back (burnt upside down so it reads
+  // correctly once the slab has turned over). A push turns the slab half a turn, top going back.
+  //
+  // The swing gate is pinned near one corner of the 1 face. In block-local coordinates its angle
+  // phi runs from GATE_LOCK (pointing local -x) to GATE_OPEN (pointing local -y, nearly).
+  //   1 at the back:  the pin is at the bottom, so the gate hangs down along the face. Open.
+  //   1 at the front: the pin is at the top, the gate stands up, topples left onto its stop and
+  //                   lies across the front of the next block. Locked, ready to carry.
+  const GATE_LOCK = Math.PI, GATE_OPEN = Math.PI * 1.5 - 0.12;
+  const GATE_L = 2.7, GATE_TAIL = 0.35, GATE_W = 0.75, GATE_T = 0.4;
+  const PIN = { x: -W / 2 + 0.6, y: -H / 2 + 1.25, z: -D / 2 - GATE_T / 2 - 0.08 };
+  const walnut = std(plainTex(99, 128, 128, '#5a3520', '25,12,5', 0), 0.6);
+  const brass = new THREE.MeshStandardMaterial({ color: 0x9c7a3c, roughness: 0.4, metalness: 0.6 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x2a170c, roughness: 0.7 });
+  const blocks = [];
+  for (let i = 0; i < N; i++) {
+    const pivot = new THREE.Group();
+    pivot.position.set((N / 2 - 0.5 - i) * PITCH, AXLE_Y, 0);
+    const s = 100 + i * 17;
+    // BoxGeometry face order: +x, -x, +y, -y, +z, -z
+    const mats = [
+      std(plainTex(s + 1, 64, 256)), std(plainTex(s + 2, 64, 256)),
+      std(valueTex(s + 3, 1 << i)), std(valueTex(s + 4, 1 << i)),   // top and bottom: place value
+      std(faceTex(s + 5, 0)),            // front: the 0
+      std(faceTex(s + 6, 1))             // back: the 1, carries the gate
+    ];
+    const body = box(W, H, D, mats, 0, 0, 0);
+    body.userData.bit = i;
+    pivot.add(body);
+    let gate = null;
+    if (i < N - 1) {
+      gate = new THREE.Group();
+      gate.position.set(PIN.x, PIN.y, PIN.z);
+      const bar = box(GATE_L + GATE_TAIL, GATE_W, GATE_T, walnut, (GATE_L - GATE_TAIL) / 2, 0, 0);
+      bar.userData.bit = i;
+      gate.add(bar);
+      pivot.add(gate);
+      // pivot pin through the gate
+      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, GATE_T + 0.25, 12), brass);
+      pin.rotation.x = Math.PI / 2; pin.position.set(PIN.x, PIN.y, PIN.z); pivot.add(pin);
+      // stop pegs: one holds the gate level when locked, one keeps it hanging just off vertical when open
+      const peg = (x, y) => {
+        const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6, 10), dark);
+        p.rotation.x = Math.PI / 2; p.position.set(x, y, -D / 2 - 0.3); p.castShadow = true; pivot.add(p);
+      };
+      peg(PIN.x + 0.05, PIN.y + GATE_W / 2 + 0.16);     // under the gate when locked (local +y is world down then)
+      peg(PIN.x + 0.43, PIN.y - 0.8);                   // keeps the open gate leaning slightly toward the lock side
+    }
+    scene.add(pivot);
+    blocks.push({ pivot, gate, phi: GATE_OPEN, omega: 0, state: 0, angle: 0, anim: null });
+  }
+
+  // ---------- motion ----------
+  // Every flip is half a turn in the same direction (top goes back), so the angle keeps decreasing.
+  const easeOutBack = t => { const c1 = 0.9, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+  function flip(i, to, { onCarry, onDone } = {}) {
+    const b = blocks[i];
+    if (b.state === to && !b.anim) return onDone && onDone();
+    b.state = to;
+    const from = b.anim ? b.anim.to : b.angle;
+    b.anim = { from: b.angle, to: from - Math.PI, t0: performance.now(), onCarry, onDone, carried: false };
+    click(to ? 1 : 0.8);
+  }
+  // Gravity on the gate. World "up" component of the gate direction is sin(phi)·cos(theta);
+  // the gate swings to lower it, between its two stop pegs.
+  function stepGate(b, dt) {
+    if (!b.gate) return;
+    const k = 70, c = 7;
+    b.omega += (-k * Math.cos(b.phi) * Math.cos(b.angle) - c * b.omega) * dt;
+    b.phi += b.omega * dt;
+    if (b.phi < GATE_LOCK) { b.phi = GATE_LOCK; if (b.omega < 0) { if (b.omega < -4) tick2(); b.omega *= -0.25; } }
+    if (b.phi > GATE_OPEN) { b.phi = GATE_OPEN; if (b.omega > 0) b.omega *= -0.25; }
+    b.gate.rotation.z = b.phi;
+  }
+  function tick2() { click(1.8, 0); }
+
+  let pending = 0, running = false, pushes = 0;
+  const statusEl = document.getElementById('status');
+  function push() {
+    ensureAudio();
+    pending++;
+    if (!running) step();
+  }
+  function step() {
+    if (pending <= 0) { running = false; return; }
+    pending--; running = true; pushes++;
+    ripple(0, 0);
+  }
+  function ripple(i, depth) {
+    if (i >= N) {
+      say('Overflow: the carry fell off the left end. Back to zero.');
+      return finish();
+    }
+    const b = blocks[i];
+    if (b.state === 0) {
+      flip(i, 1, { onDone: finish });
+      say(depth ? `Carry rippled through ${depth} block${depth > 1 ? 's' : ''} and set bit ${i}.` : 'Bit 0 set.');
+    } else {
+      flip(i, 0, { onCarry: () => ripple(i + 1, depth + 1) });
+    }
+  }
+  function finish() { setTimeout(step, reduceMotion ? 20 : 60); }
+  function say(t) { statusEl.textContent = t; }
+
+  function handFlip(i) {
+    ensureAudio();
+    if (blocks[i].anim) return;
+    flip(i, blocks[i].state ? 0 : 1);
+    say(`Bit ${i} flipped by hand. No carry.`);
+  }
+
+  // ---------- readout ----------
+  const binEl = document.getElementById('bin'), decEl = document.getElementById('dec'), hexEl = document.getElementById('hex');
+  let lastVal = -1;
+  function readout() {
+    let v = 0; for (let i = 0; i < N; i++) v |= blocks[i].state << i;
+    if (v === lastVal) return; lastVal = v;
+    const s = v.toString(2).padStart(8, '0');
+    binEl.innerHTML = `<span class="nib">${s.slice(0, 4)}</span>${s.slice(4)}`;
+    decEl.textContent = v; hexEl.textContent = v.toString(16).toUpperCase().padStart(2, '0');
+  }
+
+  // ---------- sound: a dry wooden clack ----------
+  let ac = null, noiseBuf = null, muted = false;
+  function ensureAudio() {
+    if (ac) return;
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.06, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = (Math.random() * 2 - 1) * Math.exp(-k / (d.length * 0.12));
+    } catch (e) { ac = null; }
+  }
+  function click(pitch, delay = DUR / 1000 * 0.75) {
+    if (!ac || muted) return;
+    const t = ac.currentTime + delay;
+    const src = ac.createBufferSource(); src.buffer = noiseBuf; src.playbackRate.value = pitch * (0.9 + Math.random() * 0.2);
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400 * pitch; bp.Q.value = 3;
+    const gn = ac.createGain(); gn.gain.value = 0.5;
+    src.connect(bp).connect(gn).connect(ac.destination); src.start(t);
+  }
+
+  // ---------- controls ----------
+  const autoBtn = document.getElementById('auto');
+  let autoTimer = null;
+  function setAuto(on) {
+    autoBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    clearInterval(autoTimer); autoTimer = null;
+    if (on) { ensureAudio(); autoTimer = setInterval(() => { if (!running && pending === 0) push(); }, reduceMotion ? 300 : 650); }
+  }
+  document.getElementById('push').onclick = push;
+  autoBtn.onclick = () => setAuto(autoBtn.getAttribute('aria-pressed') !== 'true');
+  document.getElementById('reset').onclick = () => {
+    setAuto(false); pending = 0;
+    blocks.forEach((b, i) => { if (b.state) setTimeout(() => flip(i, 0), i * 40); });
+    say('Reset. All blocks rolled back to 0.');
+  };
+  document.getElementById('view').onclick = () => frontView(true);
+  stage.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); push(); }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('button, input, textarea')) return;
+    if (e.key === ' ' && document.activeElement === document.body) { e.preventDefault(); push(); }
+  });
+
+  // click on blocks (ignore drags)
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+  let downAt = null;
+  renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', e => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const hit = ray.intersectObjects(blocks.map(b => b.pivot), true).find(h => h.object.userData.bit !== undefined);
+    if (!hit) return;
+    const bit = hit.object.userData.bit;
+    bit === 0 ? push() : handFlip(bit);
+  });
+  renderer.domElement.addEventListener('pointermove', e => {
+    if (e.buttons) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const over = ray.intersectObjects(blocks.map(b => b.pivot), true).some(h => h.object.userData.bit !== undefined);
+    stage.style.cursor = over ? 'pointer' : '';
+  });
+
+  // ---------- camera fitting ----------
+  const viewDir = new THREE.Vector3(-0.12, 0.34, 1).normalize();
+  let camAnim = null;
+  function fitDistance() {
+    const aspect = camera.aspect, vf = THREE.MathUtils.degToRad(camera.fov);
+    const hf = 2 * Math.atan(Math.tan(vf / 2) * aspect);
+    const halfW = baseLen / 2 + 2.5, halfH = POST_H / 2 + 3;
+    return Math.max(halfW / Math.tan(hf / 2), halfH / Math.tan(vf / 2)) + D;
+  }
+  function frontView(animate) {
+    const to = controls.target.clone().add(viewDir.clone().multiplyScalar(fitDistance()));
+    if (!animate || reduceMotion) { camera.position.copy(to); return; }
+    camAnim = { from: camera.position.clone(), to, t0: performance.now() };
+  }
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    const dir = camera.position.clone().sub(controls.target);
+    if (dir.lengthSq() < 1) frontView(false);
+    else camera.position.copy(controls.target).add(dir.normalize().multiplyScalar(fitDistance()));
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  // ---------- loop ----------
+  let lastT = performance.now();
+  function tick(now) {
+    const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    for (const b of blocks) {
+      const a = b.anim;
+      if (a) {
+        const p = Math.min(1, (now - a.t0) / DUR);
+        b.angle = a.from + (a.to - a.from) * easeOutBack(p);
+        b.pivot.rotation.x = b.angle;
+        // the locked gate is swept up and over the next block's top edge about a third of the way round
+        if (!a.carried && p >= 0.2) { a.carried = true; a.onCarry && a.onCarry(); }
+        if (p >= 1) {
+          b.angle = a.to % (Math.PI * 2); a.to = b.angle; b.pivot.rotation.x = b.angle;
+          b.anim = null; a.onDone && a.onDone();
+        }
+      }
+      for (let k = 0; k < 4; k++) stepGate(b, dt / 4);
+    }
+    if (camAnim) {
+      const p = Math.min(1, (now - camAnim.t0) / 700), e = 1 - Math.pow(1 - p, 3);
+      camera.position.lerpVectors(camAnim.from, camAnim.to, e);
+      if (p >= 1) camAnim = null;
+    }
+    readout();
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ---------- views (#model / #build) ----------
+  const views = {};
+  for (const k of ['model', 'build', 'prompts']) views[k] = document.getElementById('view-' + k);
+  function route() {
+    const h = location.hash.slice(1), v = views[h] ? h : 'model';
+    for (const k in views) {
+      views[k].hidden = k !== v;
+      const t = document.getElementById('tab-' + k);
+      if (k === v) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+    }
+    if (v === 'model') resize(); else setAuto(false);
+  }
+  addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
+  route();
+
+  // open on the number in the third photo, 0001 0000, so the tab is visible at rest
+  { const b = blocks[4]; b.state = 1; b.angle = -Math.PI; b.pivot.rotation.x = b.angle; b.phi = GATE_LOCK; b.gate.rotation.z = b.phi; }
+  blocks.forEach(b => { if (b.gate && !b.state) b.gate.rotation.z = b.phi; });
+  say('Showing 0001 0000 (16), as in the photo. Press Space or Push +1 to count on.');
+})();
+</script>
+<script>
+// ---------- Build guide: flat-pack style line drawings ----------
+(() => {
+  const C = Math.cos(Math.PI / 6), S = 0.5;
+  const VX = [1, 0, 0], VY = [0, 1, 0], VZ = [0, 0, 1];
+  const AX = { x: VX, y: VY, z: VZ };
+  const BASIS = { x: [VY, VZ], y: [VX, VZ], z: [VX, VY] };
+  const add = (a, b, s = 1) => [a[0] + b[0] * s, a[1] + b[1] * s, (a[2] || 0) + (b[2] || 0) * s];
+  const f1 = n => n.toFixed(1);
+  function hull(p) {
+    p = p.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], up = [];
+    for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+    for (const q of p.slice().reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+    return lo.slice(0, -1).concat(up.slice(0, -1));
+  }
+
+  class Fig {
+    constructor(k, mode = 'iso') { this.k = k; this.mode = mode; this.o = []; this.bb = [Infinity, Infinity, -Infinity, -Infinity]; }
+    P(p) { const [x, y, z = 0] = p, k = this.k; return this.mode === 'iso' ? [(x - z) * C * k, ((x + z) * S - y) * k] : [x * k, -y * k]; }
+    g(X, Y) { const b = this.bb; b[0] = Math.min(b[0], X); b[1] = Math.min(b[1], Y); b[2] = Math.max(b[2], X); b[3] = Math.max(b[3], Y); }
+    fmt(l) { return l.map(([X, Y]) => { this.g(X, Y); return f1(X) + ',' + f1(Y); }).join(' '); }
+    poly2(l, cls) { this.o.push(`<polygon class="${cls}" points="${this.fmt(l)}"/>`); return this; }
+    poly(l, cls) { return this.poly2(l.map(p => this.P(p)), cls); }
+    line2(a, b, cls) { this.g(...a); this.g(...b); this.o.push(`<line class="${cls}" x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}"/>`); return this; }
+    line(a, b, cls) { return this.line2(this.P(a), this.P(b), cls); }
+    text2(at, s, cls = 't', anchor = 'middle') {
+      const w = s.length * 7.6, x0 = anchor === 'middle' ? at[0] - w / 2 : anchor === 'end' ? at[0] - w : at[0];
+      this.g(x0, at[1] - 12); this.g(x0 + w, at[1] + 4);
+      this.o.push(`<text class="${cls}" x="${f1(at[0])}" y="${f1(at[1])}" text-anchor="${anchor}">${s}</text>`); return this;
+    }
+    text(p, s, cls, anchor, dx = 0, dy = 0) { const q = this.P(p); return this.text2([q[0] + dx, q[1] + dy], s, cls, anchor); }
+    // text lying on a top (+y) face, reading from the front
+    topText(p, s, size) {
+      const [X, Y] = this.P(p), k = this.k;
+      this.g(X - size * k, Y - size * k); this.g(X + size * k, Y + size * k);
+      this.o.push(`<text class="engr" text-anchor="middle" font-size="${f1(size)}" transform="matrix(${(C * k).toFixed(3)},${(S * k).toFixed(3)},${(-C * k).toFixed(3)},${(S * k).toFixed(3)},${f1(X)},${f1(Y)})" y="${f1(size * 0.35)}">${s}</text>`);
+      return this;
+    }
+    box(x, y, z, w, h, d, pal = 'w') {
+      if (this.mode === 'iso') {
+        this.poly([[x, y + h, z], [x + w, y + h, z], [x + w, y + h, z + d], [x, y + h, z + d]], pal + 't');
+        this.poly([[x, y, z + d], [x + w, y, z + d], [x + w, y + h, z + d], [x, y + h, z + d]], pal + 'f');
+        this.poly([[x + w, y, z], [x + w, y, z + d], [x + w, y + h, z + d], [x + w, y + h, z]], pal + 's');
+      } else this.poly([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], pal + 'f');
+      return this;
+    }
+    ring(c, ax, r, rv = r, n = 44) {
+      const [u, v] = BASIS[ax], out = [];
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; out.push(add(add(c, u, Math.cos(a) * r), v, Math.sin(a) * rv)); }
+      return out;
+    }
+    oval(c, ax, r, cls, rv = r) { return this.poly(this.ring(c, ax, r, rv), cls); }
+    cyl(c, ax, r, len, pal = 'w') {
+      const e = add(c, AX[ax], len), A = this.ring(c, ax, r), B = this.ring(e, ax, r);
+      this.poly2(hull(A.concat(B).map(p => this.P(p))), pal + 'f');
+      if (this.mode === 'iso' || ax === 'z') this.poly(B, pal + 't');
+      return this;
+    }
+    head(tip, from) {
+      const dx = tip[0] - from[0], dy = tip[1] - from[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, s = 10;
+      return this.poly2([tip, [tip[0] - ux * s - uy * s * 0.45, tip[1] - uy * s + ux * s * 0.45], [tip[0] - ux * s + uy * s * 0.45, tip[1] - uy * s - ux * s * 0.45]], 'ah');
+    }
+    arrow2(a, b) {
+      const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
+      this.line2(a, [b[0] - dx / L * 8, b[1] - dy / L * 8], 'arrow'); return this.head(b, a);
+    }
+    arrow(a, b) { return this.arrow2(this.P(a), this.P(b)); }
+    curve(a, c, b) {
+      const A = this.P(a), Cc = this.P(c), B = this.P(b);
+      [A, Cc, B].forEach(q => this.g(...q));
+      const dx = B[0] - Cc[0], dy = B[1] - Cc[1], L = Math.hypot(dx, dy);
+      const Bs = [B[0] - dx / L * 8, B[1] - dy / L * 8];
+      this.o.push(`<path class="arrow" d="M${f1(A[0])} ${f1(A[1])} Q${f1(Cc[0])} ${f1(Cc[1])} ${f1(Bs[0])} ${f1(Bs[1])}"/>`);
+      return this.head(B, Cc);
+    }
+    dim(a, b, off, label) {
+      const a2 = add(a, off), b2 = add(b, off);
+      this.line(add(a, off, 0.15), add(a, off, 1.15), 'dl'); this.line(add(b, off, 0.15), add(b, off, 1.15), 'dl');
+      const A = this.P(a2), B = this.P(b2);
+      this.line2(A, B, 'dl');
+      for (const q of [A, B]) this.line2([q[0] - 4, q[1] + 4], [q[0] + 4, q[1] - 4], 'dk');
+      const m = add([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, ((a[2] || 0) + (b[2] || 0)) / 2], off, 1.7);
+      return this.text(m, label, 'dt', 'middle', 0, 4);
+    }
+    tag(p, letter, dx = 0, dy = 0) {
+      const q = this.P(p), X = q[0] + dx, Y = q[1] + dy;
+      this.g(X - 12, Y - 12); this.g(X + 12, Y + 12);
+      this.o.push(`<g class="tag"><circle cx="${f1(X)}" cy="${f1(Y)}" r="10.5"/><text x="${f1(X)}" y="${f1(Y + 4.5)}" text-anchor="middle">${letter}</text></g>`);
+      return this;
+    }
+    mark(p, ok) {
+      const [X, Y] = this.P(p); this.g(X - 16, Y - 16); this.g(X + 16, Y + 16);
+      const sym = ok ? `<path d="M${X - 7} ${Y} l5 6 l10 -12"/>` : `<path d="M${X - 6} ${Y - 6} l12 12 M${X + 6} ${Y - 6} l-12 12"/>`;
+      this.o.push(`<g class="mark ${ok ? 'ok' : 'no'}"><circle cx="${X}" cy="${Y}" r="14"/>${sym}</g>`); return this;
+    }
+    svg(label, pad = 12) {
+      const [x0, y0, x1, y1] = this.bb, w = x1 - x0 + pad * 2, h = y1 - y0 + pad * 2;
+      return `<svg viewBox="${f1(x0 - pad)} ${f1(y0 - pad)} ${f1(w)} ${f1(h)}" width="${Math.round(w)}" height="${Math.round(h)}" role="img" aria-label="${label}">${this.o.join('')}</svg>`;
+    }
+  }
+
+  // ---------- shared parts ----------
+  const BW = 46, BH = 60, BD = 26;
+  function isoBlock(f, x, y, z, digit, value) {
+    f.box(x, y, z, BW, BH, BD);
+    if (digit === 0) f.oval([x + 23, y + 30, z + BD], 'z', 10, 'burn', 18);
+    if (digit === 1) f.line([x + 23, y + 12, z + BD], [x + 23, y + 48, z + BD], 'burnl');
+    if (value !== undefined) f.topText([x + 23, y + BH, z + 13], String(value), 13);
+    return f;
+  }
+  function frontBlock(f, x, y, digit, value) {
+    f.box(x, y, 0, BW, BH, 0);
+    if (digit === 1) f.line([x + 23, y + 12], [x + 23, y + 48], 'burnl');
+    else f.oval([x + 23, y + 30, 0], 'z', 10, 'burn', 18);
+    if (value !== undefined) f.text([x + 23, y + BH], String(value), 'val', 'middle', 0, -6);
+  }
+  function frontGate(f, x, y, deg) {
+    const px = x + 6, py = y + 47.5, a = deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a);
+    const pts = [[-3.5, -3.75], [27.5, -3.75], [27.5, 3.75], [-3.5, 3.75]].map(([s, t]) => [px + ux * s - uy * t, py + uy * s + ux * t, 0]);
+    f.oval([px + 0.5, py - 5.5, 0], 'z', 1.5, 'peg');
+    f.oval([px + 4.3, py + 8, 0], 'z', 1.5, 'peg');
+    f.poly(pts, 'df');
+    f.oval([px, py, 0], 'z', 1.1, 'pin');
+  }
+
+  // ---------- parts sheet ----------
+  const parts = [
+    { id: 'A', q: 8, name: 'Block 60 × 46 × 26', draw: () => isoBlock(new Fig(1.5), 0, 0, 0, 0, 1) },
+    { id: 'B', q: 2, name: 'Post 127 × 42 × 18', draw: () => new Fig(0.82).box(0, 0, 0, 18, 127, 42).oval([18, 88, 21], 'x', 4, 'hole') },
+    { id: 'C', q: 1, name: 'Base 395 × 75 × 16', draw: () => new Fig(0.34).box(0, 0, 0, 395, 16, 75) },
+    { id: 'D', q: 1, name: 'Lip 395 × 9 × 9', draw: () => new Fig(0.34).box(0, 0, 0, 395, 9, 9) },
+    { id: 'E', q: 1, name: 'Dowel Ø8 × 431', draw: () => new Fig(0.31).cyl([0, 0, 0], 'x', 4, 431) },
+    { id: 'F', q: 7, name: 'Gate 31 × 7.5 × 4, walnut', draw: () => new Fig(4).box(0, 0, 0, 31, 4, 7.5, 'd').oval([3.5, 4, 3.75], 'y', 1.1, 'hole') },
+    { id: 'G', q: 14, name: 'Peg Ø3 × 9', draw: () => new Fig(5).cyl([0, 0, 0], 'y', 1.5, 9, 'd') },
+    { id: 'H', q: 7, name: 'Brass pin, 16', draw: () => new Fig(4.5).cyl([0, 0, 0], 'y', 0.9, 15, 'b').cyl([0, 15, 0], 'y', 2.1, 1.2, 'b') },
+    { id: 'I', q: 7, name: 'Brass washer', draw: () => new Fig(7).cyl([0, 0, 0], 'y', 3, 0.7, 'b').oval([0, 0.7, 0], 'y', 1.2, 'hole') },
+    { id: 'J', q: 18, name: 'M8 nylon washer', draw: () => new Fig(3.6).cyl([0, 0, 0], 'y', 8, 1.5).oval([0, 1.5, 0], 'y', 4, 'hole') },
+    { id: 'K', q: 4, name: 'Screw 4 × 40', draw: () => { const f = new Fig(2.1).cyl([0, 0, 0], 'y', 1.8, 37, 'b').cyl([0, 37, 0], 'y', 3.8, 2, 'b'); f.line([-3.8 , 39, 0], [3.8, 39, 0], 'dk'); for (let y = 4; y < 34; y += 4) f.line([-1.8, y, 0], [1.8, y + 2, 0], 'dl'); return f; } },
+  ];
+  document.getElementById('parts').innerHTML = parts.map(p => `
+    <div class="part">
+      <div class="pic">${p.draw().svg('Part ' + p.id + ': ' + p.name, 8)}</div>
+      <div class="pid"><span class="letter">${p.id}</span><span class="qty">${p.q}x</span></div>
+      <div class="pname">${p.name}</div>
+    </div>`).join('');
+
+  // ---------- tools ----------
+  const tools = [
+    ['Saw + stop block', '<path d="M6 44 L46 18 L54 30 L14 56 Z"/><path d="M14 56 l3 -6 l3 4 l3 -6 l3 4 l3 -6 l3 4 l3 -6 l3 4 l3 -6 l3 4" class="thin"/><rect x="44" y="6" width="14" height="22" rx="4" transform="rotate(-33 51 17)"/>'],
+    ['Drill, bits 2 · 2.2 · 3 · 8 · 8.5', '<path d="M12 16h30a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6H12z"/><path d="M22 34l-4 22h12l3-22"/><rect x="48" y="21" width="6" height="8"/><line x1="54" y1="25" x2="64" y2="25"/>'],
+    ['Pyrography pen', '<path d="M10 54 L38 26 L44 32 L16 60 Z"/><path d="M38 26 L50 14 L56 20 L44 32"/><line x1="50" y1="14" x2="58" y2="6"/>'],
+    ['Square', '<path d="M10 8h10v36h36v10H10z"/><line x1="14" y1="16" x2="17" y2="16" class="thin"/><line x1="14" y1="24" x2="17" y2="24" class="thin"/><line x1="14" y1="32" x2="17" y2="32" class="thin"/>'],
+    ['Sandpaper 120–240', '<rect x="10" y="14" width="44" height="34" rx="2"/><g class="dots"><circle cx="20" cy="24" r="1.4"/><circle cx="32" cy="30" r="1.4"/><circle cx="44" cy="22" r="1.4"/><circle cx="24" cy="38" r="1.4"/><circle cx="40" cy="40" r="1.4"/></g>'],
+    ['Wood glue', '<path d="M22 22h20v34H22z"/><path d="M26 22l3-10h6l3 10"/><line x1="32" y1="12" x2="32" y2="4"/>'],
+  ];
+  document.getElementById('tools').innerHTML = tools.map(([n, d]) => `
+    <div class="tool"><svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">${d}</svg><span>${n}</span></div>`).join('');
+
+  // ---------- steps ----------
+  const steps = [];
+
+  // 1. cut the blocks
+  steps.push({
+    title: 'Cut the blocks', parts: [['A', 8]],
+    cap: 'Cut eight 60 mm lengths from one 46 × 26 strip. Clamp a stop block to the saw so they all match.',
+    figs: () => {
+      const f = new Fig(0.62);
+      f.box(0, 0, 0, 520, 26, 46);
+      for (let i = 1; i <= 8; i++) { const x = i * 63 - 3; f.line([x, 26, 0], [x, 26, 46], 'cut'); f.line([x, 0, 46], [x, 26, 46], 'cut'); }
+      f.box(-34, 0, -24, 14, 40, 94);                        // stop block, other end
+      f.dim([0, 26, 0], [60, 26, 0], [0, 0, -26], '60');
+      f.dim([520, 0, 46], [520, 26, 46], [0, 0, 22], '26');
+      f.dim([520, 0, 0], [520, 0, 46], [26, 0, 0], '46');
+      f.arrow([60, 110, 23], [60, 40, 23]);
+      const g = isoBlock(new Fig(1.3), 0, 0, 0);
+      g.text([23, 0, 26], '8x', 'qty', 'middle', -46, 30);
+      return [f.svg('A strip marked into eight 60 millimetre blocks'), g.svg('One block, eight needed')];
+    }
+  });
+
+  // 2. drill
+  steps.push({
+    title: 'Drill the axle hole', parts: [['A', 8]],
+    cap: 'Drill Ø8.5 straight through the 46 mm width, 30 down from the top and 13 in from the front. Use a jig so all eight holes match.',
+    figs: () => {
+      const f = new Fig(2.1);
+      isoBlock(f, 0, 0, 0);
+      f.line([0, 30, 13], [46, 30, 13], 'hidden');
+      f.oval([46, 30, 13], 'x', 4.25, 'hole');
+      f.cyl([62, 30, 13], 'x', 4.25, 58, 'b');
+      f.arrow([118, 46, 13], [70, 46, 13]);
+      f.dim([46, 60, 0], [46, 30, 0], [0, 0, -14], '30');
+      f.dim([46, 0, 26], [46, 0, 13], [0, -12, 0], '13');
+      f.text([92, 30, 13], 'Ø8.5', 'dt', 'middle', 0, 26);
+      f.text([0, 0, 26], '8x', 'qty', 'middle', -30, 30);
+      return [f.svg('Drilling the axle hole through a block')];
+    }
+  });
+
+  // 3. burn digits and place value
+  steps.push({
+    title: 'Burn the digits and values', parts: [['A', 8]],
+    cap: 'Burn a 0 on the front. Turn the block over top to bottom, the way it turns on the axle, and burn a 1 on the face now towards you. Burn the place value into the top and bottom edges: 1, 2, 4, 8, 16, 32, 64, 128, one per block.',
+    figs: () => {
+      const f = new Fig(1.7);
+      isoBlock(f, 0, 0, 0, 0, 1);
+      f.curve([23, 66, 30], [23, 98, 13], [23, 66, -6]);
+      f.text([23, 98, 13], '180°', 'dt', 'middle', 0, -10);
+      f.arrow([62, 30, 13], [92, 30, 13]);
+      isoBlock(f, 104, 0, 0, 1, 1);
+      const v = new Fig(1, 'front');
+      const vals = [128, 64, 32, 16, 8, 4, 2, 1];
+      vals.forEach((n, i) => { v.box(i * 52, 0, 0, 46, 26, 0); v.text([i * 52 + 23, 13], String(n), 'val', 'middle', 0, 5); });
+      v.text([0, 26], 'top and bottom edges, left to right', 'dt', 'start', 0, -12);
+      return [f.svg('Burning 0 on the front, turning the block over and burning 1'), v.svg('Place values for the eight blocks')];
+    }
+  });
+
+  // 4. gates
+  steps.push({
+    title: 'Make the gates', parts: [['F', 7]],
+    cap: 'Cut seven gates from dark hardwood. Drill Ø2.2 at 3.5 from one end so the gate spins freely on its pin. Round both ends.',
+    figs: () => {
+      const f = new Fig(7);
+      f.box(0, 0, 0, 31, 4, 7.5, 'd');
+      f.oval([3.5, 4, 3.75], 'y', 1.1, 'hole');
+      f.dim([0, 0, 7.5], [31, 0, 7.5], [0, 0, 6], '31');
+      f.dim([31, 0, 0], [31, 0, 7.5], [6, 0, 0], '7.5');
+      f.dim([0, 4, 0], [3.5, 4, 0], [0, 0, -6], '3.5');
+      f.text([3.5, 4, 3.75], 'Ø2.2', 'dt', 'end', -14, -14);
+      f.text([0, 4, 0], '7x', 'qty', 'end', -24, 0);
+      return [f.svg('Gate dimensions')];
+    }
+  });
+
+  // 5. fit gates and pegs
+  steps.push({
+    title: 'Fit the gate and pegs', parts: [['F', 1], ['G', 2], ['H', 1], ['I', 1]],
+    cap: 'Hold the block with the 1 towards you. Pin 6 from the left, 12.5 from the top. Lock peg 5.5 below the pin, lean peg 4.3 right and 8 above. Pegs stand 6 proud. Do seven blocks. The leftmost block (128) has no gate.',
+    figs: () => {
+      const f = new Fig(2.2);
+      isoBlock(f, 0, 0, 0, 1);
+      const px = 6, py = 47.5;
+      f.cyl([px + 0.5, py - 5.5, 26], 'z', 1.5, 6, 'd');
+      f.cyl([px + 4.3, py + 8, 26], 'z', 1.5, 6, 'd');
+      f.line([px, py, 26], [px, py, 92], 'hidden');
+      f.cyl([px, py, 40], 'z', 3, 0.7, 'b');
+      f.box(px - 27.5, py - 3.75, 54, 31, 7.5, 4, 'd');
+      f.oval([px, py, 58], 'z', 1.1, 'hole');
+      f.cyl([px, py, 72], 'z', 0.9, 15, 'b'); f.cyl([px, py, 87], 'z', 2.1, 1.2, 'b');
+      f.arrow([px + 14, py + 14, 98], [px + 14, py + 14, 66]);
+      f.tag([px - 26, py, 56], 'F', -14, -12); f.tag([px, py, 40], 'I', 18, 4);
+      f.tag([px, py, 88], 'H', 18, 4); f.tag([px + 4.3, py + 8, 32], 'G', 16, -10);
+      const d = new Fig(3.2, 'front');
+      frontBlock(d, 0, 0, 1); frontGate(d, 0, 0, 180);
+      d.line([6, 47.5], [56, 47.5], 'hidden');
+      d.dim([0, 60], [6, 60], [0, 8], '6');
+      d.dim([56, 60], [56, 47.5], [6, 0], '12.5');
+      d.dim([0, 0], [46, 0], [0, -8], '46');
+      d.dim([46, 0], [46, 60], [22, 0], '60');
+      d.text([12, 33], 'lock peg', 'dt', 'start', 0, 0);
+      d.text([19, 63], 'lean peg', 'dt', 'start', 0, -8);
+      return [f.svg('Exploded view: peg, washer, gate and pin on the 1 face'), d.svg('Gate pin and peg positions on the 1 face')];
+    }
+  });
+
+  // 6. frame
+  steps.push({
+    title: 'Make the frame', parts: [['B', 2], ['C', 1], ['D', 1], ['K', 4]],
+    cap: 'Drill Ø8 through each post, 88 up from the bottom. Glue and screw the posts to the ends of the base, two screws each. Glue the lip along the front edge.',
+    figs: () => {
+      const f = new Fig(0.6);
+      f.box(-50, 0, 16.5, 18, 127, 42); f.oval([-32, 88, 37.5], 'x', 4, 'hole');
+      f.box(18, 0, 0, 395, 16, 75);
+      f.box(18, 56, 66, 395, 9, 9);
+      f.arrow([215, 110, 70], [215, 72, 70]);
+      f.box(463, 0, 16.5, 18, 127, 42); f.oval([481, 88, 37.5], 'x', 4, 'hole');
+      for (const z of [28, 48]) { f.cyl([500, 8, z], 'x', 1.8, 38, 'b'); f.cyl([538, 8, z], 'x', 3.8, 2, 'b'); }
+      f.arrow([600, 22, 38], [552, 22, 38]);
+      f.arrow([-80, 60, 37.5], [-60, 60, 37.5]);
+      f.arrow([450, 60, 37.5], [425, 60, 37.5]);
+      f.dim([481, 0, 58.5], [481, 88, 58.5], [0, 0, 24], '88');
+      f.tag([-41, 127, 37], 'B', 0, -16); f.tag([300, 16, 75], 'C', 0, 22); f.tag([300, 65, 75], 'D', 0, 18); f.tag([538, 8, 48], 'K', 18, 14);
+      return [f.svg('Exploded view of the frame')];
+    }
+  });
+
+  // 7. thread
+  steps.push({
+    title: 'Thread the blocks on', parts: [['A', 8], ['E', 1], ['J', 18]],
+    cap: 'Wax the dowel. From the right: 2 washers, a block, 2 washers, and so on, ending with 2 washers. Blocks go 1, 2, 4 … 128 from right to left, with each gate on the left of its 1 face. Glue the dowel at one post only.',
+    figs: () => {
+      const f = new Fig(0.95);
+      const washer = x => { f.cyl([x, 88, 21], 'x', 8, 1.5); f.oval([x + 1.5, 88, 21], 'x', 4, 'hole'); };
+      f.box(0, 0, 0, 18, 127, 42);
+      const vals = [128, 64, 32];
+      let x = 34;
+      for (let i = 0; i < 3; i++) { washer(x); washer(x + 5); isoBlock(f, x + 18, 58, 8, 0, vals[i]); x += 80; }
+      f.text([x + 10, 70, 21], '· · ·', 'qty', 'middle');
+      washer(x + 40); washer(x + 45);
+      f.box(x + 62, 0, 0, 18, 127, 42);
+      f.cyl([x + 110, 88, 21], 'x', 4, 160);
+      f.arrow([x + 260, 110, 21], [x + 140, 110, 21]);
+      f.line([-10, 88, 21], [x + 110, 88, 21], 'hidden');
+      f.tag([34, 96, 21], 'J', 0, -22); f.tag([72, 118, 21], 'A', 0, -18); f.tag([x + 200, 88, 21], 'E', 0, 22); f.tag([x + 71, 127, 21], 'B', 0, -16);
+      return [f.svg('Threading washers and blocks onto the dowel')];
+    }
+  });
+
+  // 8. test
+  steps.push({
+    title: 'Test and tune', parts: [],
+    cap: 'Set every block to 0. Push the right-hand block over the top: its gate should stand, tip left and lock across the next block. Push again and the gate carries the next block over.',
+    figs: () => {
+      const f = new Fig(1.3, 'front');
+      const rows = [[0, 0, 0], [0, 0, 1], [0, 1, 0]], vals = [4, 2, 1];
+      rows.forEach((r, j) => {
+        const y = -j * 104;
+        r.forEach((b, i) => frontBlock(f, i * 49, y, b, vals[i]));
+        r.forEach((b, i) => { if (b) frontGate(f, i * 49, y, 180); });
+        f.text([150, y + 30], '= ' + (r[0] * 4 + r[1] * 2 + r[2]), 'qty', 'start', 0, 6);
+        if (j < 2) {
+          f.curve([150, y + 82], [150, y + 64], [132, y + 64]);
+          f.arrow([-16, y - 6], [-16, y - 40]);
+        }
+      });
+      const g = new Fig(1.3, 'front');
+      frontBlock(g, 0, 0, 0); frontBlock(g, 49, 0, 1); frontGate(g, 49, 0, 180); g.mark([118, 30], true);
+      frontBlock(g, 0, -116, 0); frontBlock(g, 49, -116, 1); frontGate(g, 49, -116, 97); g.mark([118, -86], false);
+      return [f.svg('Counting 0, 1, 2 with the gate carrying'), g.svg('Right: gate locked across the next block. Wrong: gate left standing up')];
+    }
+  });
+
+  document.getElementById('steps').innerHTML = steps.map((s, i) => `
+    <li>
+      <div class="top">
+        <span class="num">${i + 1}</span>
+        <div class="chips">${s.parts.map(([id, q]) => `<span class="chip"><span class="letter sm">${id}</span>${q}x</span>`).join('')}</div>
+      </div>
+      <div class="figs">${s.figs().join('')}</div>
+      <div><h4>${s.title}</h4><p class="cap">${s.cap}</p></div>
+    </li>`).join('');
+})();
+</script>
+
