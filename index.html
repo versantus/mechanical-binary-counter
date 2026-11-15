@@ -651,12 +651,14 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   // ---------- motion ----------
   // Every flip is half a turn in the same direction (top goes back), so the angle keeps decreasing.
   const easeOutBack = t => { const c1 = 0.9, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
-  function flip(i, to, { onCarry, onDone } = {}) {
+  // Pushes and carries roll a block over the top (angle decreases). A 1 set back to 0 by hand
+  // (or by Reset) turns back the way it came instead.
+  function flip(i, to, { onCarry, onDone, back = false } = {}) {
     const b = blocks[i];
     if (b.state === to && !b.anim) return onDone && onDone();
     b.state = to;
     const from = b.anim ? b.anim.to : b.angle;
-    b.anim = { from: b.angle, to: from - Math.PI, t0: performance.now(), onCarry, onDone, carried: false };
+    b.anim = { from: b.angle, to: from + (back ? Math.PI : -Math.PI), t0: performance.now(), onCarry, onDone, carried: false };
     click(to ? 1 : 0.8);
   }
   // Gravity on the gate. World "up" component of the gate direction is sin(phi)·cos(theta);
@@ -703,7 +705,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   function handFlip(i) {
     ensureAudio();
     if (blocks[i].anim) return;
-    flip(i, blocks[i].state ? 0 : 1);
+    flip(i, blocks[i].state ? 0 : 1, { back: blocks[i].state === 1 });
     say(`Bit ${i} flipped by hand. No carry.`);
   }
 
@@ -749,7 +751,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   autoBtn.onclick = () => setAuto(autoBtn.getAttribute('aria-pressed') !== 'true');
   document.getElementById('reset').onclick = () => {
     setAuto(false); pending = 0;
-    blocks.forEach((b, i) => { if (b.state) setTimeout(() => flip(i, 0), i * 40); });
+    blocks.forEach((b, i) => { if (b.state) setTimeout(() => flip(i, 0, { back: true }), i * 40); });
     say('Reset. All blocks rolled back to 0.');
   };
   document.getElementById('view').onclick = () => frontView(true);
@@ -1298,12 +1300,12 @@ async function boot() {
   for (const i of [0, 1, 2, 5]) { const b = blocks[i]; b.state = 1; b.angle = -Math.PI; b.phi = LOCK; }
 
   const easeOutBack = t => 1 + 1.9 * Math.pow(t - 1, 3) + 0.9 * Math.pow(t - 1, 2);
-  function flip(i, to, { onCarry, onDone } = {}) {
+  function flip(i, to, { onCarry, onDone, back = false } = {}) {
     const b = blocks[i];
     if (b.state === to && !b.anim) return onDone && onDone();
     b.state = to;
     const base = b.anim ? b.anim.to : b.angle;
-    b.anim = { from: b.angle, to: base - Math.PI, t0: performance.now(), onCarry, onDone, carried: false };
+    b.anim = { from: b.angle, to: base + (back ? Math.PI : -Math.PI), t0: performance.now(), onCarry, onDone, carried: false };
   }
   let pending = 0, running = false;
   function push() { pending++; if (!running) step(); }
@@ -1314,7 +1316,7 @@ async function boot() {
     if (b.state === 0) flip(i, 1, { onDone: () => setTimeout(step, 60) });
     else flip(i, 0, { onCarry: () => ripple(i + 1) });
   }
-  function handFlip(i) { if (!blocks[i].anim) flip(i, blocks[i].state ? 0 : 1); }
+  function handFlip(i) { if (!blocks[i].anim) flip(i, blocks[i].state ? 0 : 1, { back: blocks[i].state === 1 }); }
 
   const binEl = document.getElementById('r-bin'), decEl = document.getElementById('r-dec');
   let lastVal = -1;
@@ -1332,7 +1334,7 @@ async function boot() {
   }
   document.getElementById('r-push').onclick = push;
   autoBtn.onclick = () => setAuto(autoBtn.getAttribute('aria-pressed') !== 'true');
-  document.getElementById('r-reset').onclick = () => { setAuto(false); pending = 0; blocks.forEach((b, i) => { if (b.state) setTimeout(() => flip(i, 0), i * 50); }); };
+  document.getElementById('r-reset').onclick = () => { setAuto(false); pending = 0; blocks.forEach((b, i) => { if (b.state) setTimeout(() => flip(i, 0, { back: true }), i * 50); }); };
   stage.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); push(); } });
 
   const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let downAt = null;
