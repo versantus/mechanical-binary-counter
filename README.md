@@ -12,7 +12,7 @@ Eight pine blocks hang on a dowel. Each has a 0 on the front, a 1 on the back an
 
 [![15 + 1: the carry ripples along four blocks. Click to watch the full video.](docs/ripple.gif)](docs/counter.mp4)
 
-The full video ([docs/counter.mp4](docs/counter.mp4), 21 seconds) counts from 0 to 16 with captions and a live binary readout. Click the clip above to watch it.
+The full video ([docs/counter.mp4](docs/counter.mp4), 35 seconds, with sound) counts from 0 to 16 with captions and a live binary readout, and ends with a QR code back to this repo. Click the clip above to watch it.
 
 ![Close-up of the gates locked across the right-hand blocks, with brass pins and stop pegs](docs/closeup.jpg)
 
