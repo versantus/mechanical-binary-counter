@@ -218,6 +218,8 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
         <button id="r-reset">Reset to zero</button>
         <button id="r-view">Front view</button>
         <button id="r-close">Close-up</button>
+        <button id="r-sound" aria-pressed="true">Sound on</button>
+        <button id="r-ar" hidden>View on your desk</button>
       </div>
       <div class="readout" aria-live="polite">
         <div><span class="label">Binary</span><span class="val bits" id="r-bin">0010 0111</span></div>
@@ -749,8 +751,9 @@ async function boot() {
   for (let i = 0; i < N; i++) {
     const pivot = gltf.scene.getObjectByName(`Block_${1 << i}_pivot`);
     const gate = gltf.scene.getObjectByName(`Gate_${1 << i}_pivot`) || null;
+    const body = gltf.scene.getObjectByName(`Block_${1 << i}`);
     pivot.traverse(o => { o.userData.bit = i; });
-    blocks.push({ pivot, gate, state: 0, angle: 0, anim: null, phi: OPEN, omega: 0 });
+    blocks.push({ i, pivot, gate, body, state: 0, angle: 0, anim: null, phi: OPEN, omega: 0 });
   }
   // open on 0010 0111 (39), as in the render
   for (const i of [0, 1, 2, 5]) { const b = blocks[i]; b.state = 1; b.angle = -Math.PI; b.phi = LOCK; }
@@ -773,6 +776,33 @@ async function boot() {
     else flip(i, 0, { onCarry: () => ripple(i + 1) });
   }
   function handFlip(i) { if (!blocks[i].anim) flip(i, blocks[i].state ? 0 : 1, { back: blocks[i].state === 1 }); }
+
+  // ---------- sound: a synthesised wooden clack when a block lands, a tick when a gate locks ----------
+  let ac = null, soundOn = true; const bufs = {};
+  function ensureAudio() {
+    if (!soundOn) return;
+    if (!ac) {
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const make = (dur, fn) => { const n = Math.floor(ac.sampleRate * dur), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = fn(k / ac.sampleRate); return b; };
+        const f = 820, TAU = Math.PI * 2;
+        bufs.clack = make(0.16, t => 0.5 * (0.55 * (Math.sin(TAU * f * t) * Math.exp(-t / 0.035) + 0.6 * Math.sin(TAU * f * 2.31 * t) * Math.exp(-t / 0.02) + 0.35 * Math.sin(TAU * f * 3.9 * t) * Math.exp(-t / 0.012)) + (Math.random() * 2 - 1) * Math.exp(-t / 0.004) * 0.7));
+        bufs.tick = make(0.07, t => 0.45 * (0.35 * Math.sin(TAU * 2900 * t) * Math.exp(-t / 0.012) + (Math.random() * 2 - 1) * Math.exp(-t / 0.003) * 0.5));
+      } catch (e) { ac = null; return; }
+    }
+    if (ac.state === 'suspended') ac.resume();
+  }
+  function play(kind, i, gain = 1) {
+    if (!ac || !soundOn || ac.state !== 'running') return;
+    const src = ac.createBufferSource(); src.buffer = bufs[kind]; src.playbackRate.value = 0.94 + Math.random() * 0.12;
+    const g = ac.createGain(); g.gain.value = gain;
+    let node = src.connect(g);
+    if (ac.createStereoPanner) { const pan = ac.createStereoPanner(); pan.pan.value = 0.75 - i * 0.19; node = node.connect(pan); }
+    node.connect(ac.destination); src.start();
+  }
+  const soundBtn = document.getElementById('r-sound');
+  soundBtn.onclick = () => { soundOn = !soundOn; soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; ensureAudio(); };
+  ['pointerdown', 'keydown'].forEach(ev => document.getElementById('view-rendered').addEventListener(ev, ensureAudio, true));
 
   const binEl = document.getElementById('r-bin'), decEl = document.getElementById('r-dec');
   let lastVal = -1;
@@ -807,7 +837,16 @@ async function boot() {
     const bit = hitBit(e); if (bit === undefined) return;
     bit === 0 ? push() : handFlip(bit);
   });
-  renderer.domElement.addEventListener('pointermove', e => { if (!e.buttons) stage.style.cursor = hitBit(e) !== undefined ? 'pointer' : ''; });
+  let hovered = -1;
+  function setHover(bit) {
+    if (bit === hovered) return;
+    if (hovered >= 0 && blocks[hovered].body) blocks[hovered].body.material.emissive.setHex(0x000000);
+    hovered = bit;
+    if (hovered >= 0 && blocks[hovered].body) blocks[hovered].body.material.emissive.setHex(hovered === 0 ? 0x3a2108 : 0x24160a);
+    stage.style.cursor = hovered >= 0 ? 'pointer' : '';
+  }
+  renderer.domElement.addEventListener('pointermove', e => { if (!e.buttons) { const b = hitBit(e); setHover(b === undefined ? -1 : b); } });
+  renderer.domElement.addEventListener('pointerleave', () => setHover(-1));
 
   // ---------- camera ----------
   let camAnim = null;
@@ -843,15 +882,22 @@ async function boot() {
   new ResizeObserver(resize).observe(stage); resize();
 
   let lastT = performance.now();
+  const perf = { frames: 0, slow: 0 };
   function tick(now) {
     requestAnimationFrame(tick);
     const dt = Math.max(0, Math.min(0.05, (now - lastT) / 1000)); lastT = Math.max(lastT, now);
     if (!active) return;
+    // if frames are slow for a few seconds, drop the contact shadows and render directly
+    if (composer && dt > 0) {
+      perf.frames++; if (dt > 1 / 35) perf.slow++;
+      if (perf.frames >= 120) { if (perf.slow > 80) composer = null; perf.frames = perf.slow = 0; }
+    }
     for (const b of blocks) {
       const a = b.anim;
       if (a) {
         const p = Math.min(1, (now - a.t0) / DUR);
         b.angle = a.from + (a.to - a.from) * easeOutBack(p);
+        if (!a.landed && easeOutBack(p) >= 1) { a.landed = true; play('clack', b.i); }
         if (!a.carried && p >= 0.2) { a.carried = true; a.onCarry && a.onCarry(); }
         if (p >= 1) { b.angle = a.to % (Math.PI * 2); b.anim = null; a.onDone && a.onDone(); }
       }
@@ -861,7 +907,7 @@ async function boot() {
           const h = dt / 4;
           b.omega += (-70 * Math.cos(b.phi) * Math.cos(b.angle) - 7 * b.omega) * h;
           b.phi += b.omega * h;
-          if (b.phi < LOCK) { b.phi = LOCK; if (b.omega < 0) b.omega *= -0.25; }
+          if (b.phi < LOCK) { b.phi = LOCK; if (b.omega < -1.5) play('tick', b.i, Math.min(1, -b.omega / 12)); if (b.omega < 0) b.omega *= -0.25; }
           if (b.phi > OPEN) { b.phi = OPEN; if (b.omega > 0) b.omega *= -0.25; }
         }
         b.gate.rotation.z = b.phi;
@@ -877,5 +923,22 @@ async function boot() {
   }
   requestAnimationFrame(tick);
   api = { resize, setAuto };
+
+  // ---------- view on your desk: AR on phones that support it (iOS Quick Look, Android WebXR) ----------
+  try {
+    const arBtn = document.getElementById('r-ar');
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let arOK = isIOS && document.createElement('a').relList.supports('ar');
+    if (!arOK && navigator.xr) arOK = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+    if (arOK) {
+      await import('https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js');
+      const mv = document.createElement('model-viewer');
+      for (const [k, v] of [['src', 'assets/counter.gltf.json'], ['ar', ''], ['ar-modes', 'webxr quick-look'], ['ar-scale', 'fixed'], ['ar-placement', 'floor'], ['alt', 'Wooden binary counter']]) mv.setAttribute(k, v);
+      mv.style.cssText = 'position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:0;pointer-events:none';
+      document.body.append(mv);
+      mv.addEventListener('load', () => { if (mv.canActivateAR) arBtn.hidden = false; });
+      arBtn.onclick = () => mv.activateAR();
+    }
+  } catch (e) { /* AR is optional */ }
 }
 </script>
