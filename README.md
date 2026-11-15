@@ -20,14 +20,12 @@ The stills are ray traced in Blender Cycles. The video is rendered with Blender'
 
 ## What's in the page
 
-- **Model:** a 3D counter built with three.js. Push the right-hand block (or press Space) to count, click other blocks to flip them by hand, and drag to turn the model.
-- **Rendered:** the same counter with the textures from the ray-traced render baked in (`assets/counter.gltf.json`), lit like the render. Still fully interactive: push, flip, drag and zoom.
+- **Counter:** the counter with textures baked from the ray-traced render (`assets/counter.gltf.json`), lit like the render. Push the right-hand block (or press Space) to count, click other blocks to flip them by hand, and drag or scroll to look around.
 - **Build your own:** a parts sheet, a tools list and eight illustrated steps for making a real one.
-- **Prompts used:** the prompts used to build this page with Claude Code.
 
 ## Running it
 
-Open `index.html` in a browser. It loads three.js r128 from a CDN, so it needs an internet connection.
+Serve the folder over HTTP (for example `python3 -m http.server`) and open it in a browser. Opening `index.html` straight from disk won't load the model file. The page loads three.js from a CDN, so it needs an internet connection.
 
 The build measurements come from the model, not from the original counter. Make one test block and check the gate works before cutting the rest.
 

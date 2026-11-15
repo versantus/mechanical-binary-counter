@@ -108,9 +108,9 @@ td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-
 .steps > li > * { grid-column: 2; }
 .steps > li > h4 { grid-row: 1; align-self: center; }
 .tabs { flex-wrap: wrap; }
-.build, .prompts { --paper: #ffffff; --ink: #16191c; --f1: #f1f1ee; --f2: #dcdcd7; --d1: #7a5a44; --d2: #5f4332; --d3: #4a3426; --b1: #e3cf9a; --b2: #c9ae6a; --burnc: #5a2a10; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .build, :root:not([data-theme="light"]) .prompts { --paper: #1b1f23; --ink: #e8ebee; --f1: #252a30; --f2: #30363d; --d1: #6b4a34; --d2: #563a28; --d3: #45301f; --b1: #8f7a44; --b2: #7a6638; --burnc: #e0a46a; } }
-:root[data-theme="dark"] .build, :root[data-theme="dark"] .prompts { --paper: #1b1f23; --ink: #e8ebee; --f1: #252a30; --f2: #30363d; --d1: #6b4a34; --d2: #563a28; --d3: #45301f; --b1: #8f7a44; --b2: #7a6638; --burnc: #e0a46a; }
+.build { --paper: #ffffff; --ink: #16191c; --f1: #f1f1ee; --f2: #dcdcd7; --d1: #7a5a44; --d2: #5f4332; --d3: #4a3426; --b1: #e3cf9a; --b2: #c9ae6a; --burnc: #5a2a10; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .build { --paper: #1b1f23; --ink: #e8ebee; --f1: #252a30; --f2: #30363d; --d1: #6b4a34; --d2: #563a28; --d3: #45301f; --b1: #8f7a44; --b2: #7a6638; --burnc: #e0a46a; } }
+:root[data-theme="dark"] .build { --paper: #1b1f23; --ink: #e8ebee; --f1: #252a30; --f2: #30363d; --d1: #6b4a34; --d2: #563a28; --d3: #45301f; --b1: #8f7a44; --b2: #7a6638; --burnc: #e0a46a; }
 .build svg { overflow: visible; max-width: 100%; height: auto; }
 .build svg polygon, .build svg path, .build .tool rect { stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
 .build .wt { fill: var(--paper); } .build .wf { fill: var(--f1); } .build .ws { fill: var(--f2); }
@@ -159,15 +159,6 @@ td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-
 .figs { display: flex; flex-wrap: wrap; gap: 18px 24px; justify-content: center; align-items: center; min-width: 0; }
 .ikea h4 { margin: 0 0 2px; }
 .ikea .cap { margin: 0; font-size: 14px; color: var(--muted); }
-.promptlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: pr; }
-.promptlist > li { counter-increment: pr; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
-.promptlist > li::before { content: counter(pr); grid-row: span 3; font: 700 28px/1 var(--display); color: var(--accent); }
-.promptlist > li > * { grid-column: 2; }
-.promptlist blockquote { margin: 0; font: 500 15px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
-.promptlist .att { margin: 4px 0 0; font-size: 13px; color: var(--muted); font-style: italic; }
-.promptlist .res { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
-.prompts .intro p { max-width: 68ch; margin: 0; color: var(--muted); }
-.prompts h2.big { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px); margin: 0 0 8px; }
 .whatis h2 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 4px; }
 .whatis p { margin: 0; max-width: 72ch; color: var(--muted); }
 .loading { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; color: var(--muted); font-family: var(--mono); font-size: 13px; pointer-events: none; }
@@ -203,40 +194,33 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
       <h1>Wooden Binary Counter</h1>
     </div>
     <nav class="tabs" aria-label="Views">
-      <a href="#model" id="tab-model">Model</a>
-      <a href="#rendered" id="tab-rendered">Rendered</a>
+      <a href="#rendered" id="tab-rendered">Counter</a>
       <a href="#build" id="tab-build">Build your own</a>
-      <a href="#prompts" id="tab-prompts">Prompts used</a>
     </nav>
     <a class="ghlink" href="https://github.com/versantus/mechanical-binary-counter" target="_blank" rel="noopener" aria-label="View source on GitHub"><svg class="gh" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg><span>GitHub</span></a>
   </header>
 
-  <div id="view-model" class="view">
-
+  <div id="view-rendered" class="view">
   <section class="whatis">
     <h2>What is this?</h2>
-    <p>A binary counter made of wood, with no electronics. Each of the eight blocks is one binary digit, worth 1, 2, 4 and so on up to 128, reading from the right. Add up the values of the blocks showing 1 and you have the number. Push the right-hand block to add one. If it was already a 1, it turns back to 0 and its gate carries the next block over, just as you carry a 1 when adding on paper. Eight blocks count from 0 to 255.</p>
+    <p>A binary counter made of wood, with no electronics. Each of the eight blocks is one binary digit, worth 1, 2, 4 and so on up to 128, reading from the right. Add up the values of the blocks showing 1 and you have the number. Push the right-hand block to add one. If it was already a 1, it turns back to 0 and its gate carries the next block over, just as you carry a 1 when adding on paper. Eight blocks count from 0 to 255. Click any other block to flip it by hand, and drag or scroll to look around.</p>
   </section>
-
-  <div class="stage" id="stage" tabindex="0" aria-label="3D model of an eight-bit wooden binary counter. Press Space to push the right-hand block.">
-    <span class="hint">click right block to push · click others to flip by hand · drag to turn</span>
-  </div>
-
-  <div class="panel">
-    <div class="controls">
-      <button class="primary" id="push">Push +1</button>
-      <button id="auto" aria-pressed="false">Count continuously</button>
-      <button id="reset">Reset to zero</button>
-      <button id="view">Front view</button>
+    <div class="stage" id="stage-r" tabindex="0" aria-label="Rendered 3D model of the wooden binary counter. Press Space to push the right-hand block.">
+      <p class="loading" id="r-loading">Loading the rendered model…</p>
+      <span class="hint">click right block to push · click others to flip by hand · drag to turn · scroll to zoom</span>
     </div>
-    <div class="readout" aria-live="polite">
-      <div><span class="label">Binary</span><span class="val bits" id="bin">0000 0000</span></div>
-      <div><span class="label">Decimal</span><span class="val" id="dec">0</span></div>
-      <div><span class="label">Hex</span><span class="val" id="hex">00</span></div>
+    <div class="panel">
+      <div class="controls">
+        <button class="primary" id="r-push">Push +1</button>
+        <button id="r-auto" aria-pressed="false">Count continuously</button>
+        <button id="r-reset">Reset to zero</button>
+        <button id="r-view">Front view</button>
+      </div>
+      <div class="readout" aria-live="polite">
+        <div><span class="label">Binary</span><span class="val bits" id="r-bin">0010 0111</span></div>
+        <div><span class="label">Decimal</span><span class="val" id="r-dec">39</span></div>
+      </div>
     </div>
-  </div>
-  <div class="status" id="status">Ready. Press <kbd>Space</kbd> to push.</div>
-
   <div class="notes">
     <section>
       <h2>The blocks</h2>
@@ -256,29 +240,6 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
     </section>
   </div>
   <p class="cta"><a href="#build">Build a real one: parts list and instructions →</a></p>
-  </div>
-
-  <div id="view-rendered" class="view" hidden>
-    <section class="whatis">
-      <h2>Rendered</h2>
-      <p>The same counter with the wood, burn marks and lighting from the ray-traced render baked in. Drag to turn it, scroll or pinch to zoom, and click the right-hand block to count. Click any other block to flip it by hand.</p>
-    </section>
-    <div class="stage" id="stage-r" tabindex="0" aria-label="Rendered 3D model of the wooden binary counter. Press Space to push the right-hand block.">
-      <p class="loading" id="r-loading">Loading the rendered model…</p>
-      <span class="hint">click right block to push · click others to flip by hand · drag to turn · scroll to zoom</span>
-    </div>
-    <div class="panel">
-      <div class="controls">
-        <button class="primary" id="r-push">Push +1</button>
-        <button id="r-auto" aria-pressed="false">Count continuously</button>
-        <button id="r-reset">Reset to zero</button>
-        <button id="r-view">Front view</button>
-      </div>
-      <div class="readout" aria-live="polite">
-        <div><span class="label">Binary</span><span class="val bits" id="r-bin">0010 0111</span></div>
-        <div><span class="label">Decimal</span><span class="val" id="r-dec">39</span></div>
-      </div>
-    </div>
   </div>
 
   <article id="view-build" class="view build" hidden>
@@ -316,114 +277,11 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
       <div>
         <h3>Finishing</h3>
         <p>Sand to 240, then use Danish oil or clear wax. Keep finish off the axle holes, the pins and the faces the gates slide over, or the action gets sticky. Wax the axle once the finish is dry.</p>
-        <p class="cta"><a href="#model">← Back to the model</a></p>
+        <p class="cta"><a href="#rendered">← Back to the counter</a></p>
       </div>
     </section>
   </article>
 
-  <article id="view-prompts" class="view prompts" hidden>
-    <section class="intro">
-      <h2 class="big">Prompts used</h2>
-      <p>This page was made in one Claude Code session. These are the prompts, word for word and in order, with a note on what each one changed. Screenshots attached to a prompt are noted but not reproduced.</p>
-    </section>
-    <ol class="promptlist">
-      <li>
-        <blockquote>can you make a faithful reproduction of this mechanical wooden binary counter? [Image #1] [Image #2] [Image #3] from Alan Donohoe?</blockquote>
-        <p class="att">3 screenshots from the video: the counter at 0000 0000, 0000 1111 and 0001 0000.</p>
-        <p class="res">Built the first 3D model: eight pine blocks on an axle, burnt digits, walnut tabs and a rippling carry, with push, auto-count and reset controls.</p>
-      </li>
-      <li>
-        <blockquote>the little swing gates should be on the '1' faces, and should drop down to lock in place when the dial is turned.[Image #4] - the cubes should not be cubes, but 'dice' style rectangles. So when the 1 is on the back, the lcoking mechanism is 'down' (so gravity causes it to be open), then when it's the other way up, it is 'up', meaning gravity forces it to drop into place!</blockquote>
-        <p class="att">1 screenshot: the counter at 0000 0111, gates standing on the 1 blocks.</p>
-        <p class="res">Changed the blocks to flat slabs that turn half a turn, moved the gates onto the 1 faces and gave them gravity, with two stop pegs.</p>
-      </li>
-      <li>
-        <blockquote>Then also add a 'Build your own' page that will give a walktrhough./parts list / instruction son how to construct a real version. And link to the original https://www.instagram.com/reels/DfU1AMuv1Cz/</blockquote>
-        <p class="res">Added the Build your own view with a cutting list, hardware, tools and written steps, and linked the original reel.</p>
-      </li>
-      <li>
-        <blockquote>each step in the build your own could be more visual. Maybe more ikea style?</blockquote>
-        <p class="res">Redrew the guide as line drawings: a lettered parts sheet with quantities, tool icons, and a numbered drawing for every step with dimensions and arrows.</p>
-      </li>
-      <li>
-        <blockquote>add a page to the site for 'Prompts used' and document all of the prompts I've used for this process please.</blockquote>
-        <p class="res">Added this page.</p>
-      </li>
-      <li>
-        <blockquote>Maybe add the binary value on the top and bottom of each 'domino' too, (1,2,4,8,16,etc) so the user can see what value they're adding?</blockquote>
-        <p class="res">Burnt each block's place value, 1 to 128, into its top and bottom edges, so it reads on top whichever way up the block is. Added the same to the build guide.</p>
-      </li>
-      <li>
-        <blockquote>can you push to github please?</blockquote>
-        <p class="res">Asked whether the repo should be public or private (public) and how to handle the first push (README on main, the counter on a branch with a pull request). Created the repo and opened the pull request.</p>
-      </li>
-      <li>
-        <blockquote>can you merge it and turn on github pages?</blockquote>
-        <p class="res">Merged the pull request and turned on GitHub Pages.</p>
-      </li>
-      <li>
-        <blockquote>Add a 'What is this' short para just above the image</blockquote>
-        <p class="res">Added a short explanation above the 3D model.</p>
-      </li>
-      <li>
-        <blockquote>yes. And remove the 'After the eight bit...' para that is there at the moment</blockquote>
-        <p class="res">Removed the credit line from the header and merged.</p>
-      </li>
-      <li>
-        <blockquote>build your own and prompts links don't see to work on github pages! https://versantus.github.io/mechanical-binary-counter/#prompts</blockquote>
-        <p class="res">Moved the tab switching into its own script so it no longer depends on the 3D model starting.</p>
-      </li>
-      <li>
-        <blockquote>then once deployed, can you create a high resolution ray traced version too? Don't deploy this or commit it.</blockquote>
-        <p class="res">Built the counter in Blender from a script and rendered two 4K stills with Cycles.</p>
-      </li>
-      <li>
-        <blockquote>Oh, and on the deployed version, add a Versantus logo in the header and a 'Made with love by Versantus' with a link back in the footer. Oh, and also link to the github repo in an typical way.</blockquote>
-        <p class="res">Added the Versantus logo, a footer credit and GitHub links.</p>
-      </li>
-      <li>
-        <blockquote>Prompts and Build your Own still don't link to the relevant part of the page</blockquote>
-        <p class="res">Found the real cause: on GitHub Pages all three views showed at once. Added the missing rule that hides inactive views.</p>
-      </li>
-      <li>
-        <blockquote>how is it going?</blockquote>
-        <p class="res">Progress check on the 4K renders.</p>
-      </li>
-      <li>
-        <blockquote>open [Image #5]</blockquote>
-        <p class="res">Opened the finished 4K render in Preview. Asked twice.</p>
-      </li>
-      <li>
-        <blockquote>how would we animate these,do you thnk (without killing the mac)</blockquote>
-        <p class="res">Suggested keyframing the same scene and rendering at a lighter setting.</p>
-      </li>
-      <li>
-        <blockquote>try wiht the rasterizer first.</blockquote>
-        <p class="res">Animated the counter counting 0 to 16 and rendered it with EEVEE.</p>
-      </li>
-      <li>
-        <blockquote>how is it going?</blockquote>
-        <p class="res">Progress check on the animation.</p>
-      </li>
-      <li>
-        <blockquote>show me a few frames</blockquote>
-        <p class="res">Showed six frames of the first gate dropping into place.</p>
-      </li>
-      <li>
-        <blockquote>show me</blockquote>
-        <p class="res">Opened a preview of the frames rendered so far.</p>
-      </li>
-      <li>
-        <blockquote>make another preview for me</blockquote>
-        <p class="res">Opened a longer preview.</p>
-      </li>
-      <li>
-        <blockquote>Add the versantus sting to the end of the video once done, and some captions to the video. Also add a small QR on every page that links to the github repo. And add images and the finished video to the github repo README!</blockquote>
-        <p class="res">Added captions, a live readout and a Versantus end card to the video, a QR code in the footer, and the renders and video to the README.</p>
-      </li>
-    </ol>
-    <p class="cta"><a href="#model">← Back to the model</a></p>
-  </article>
 
   <footer class="site-foot">
     <p>Made with love by <a href="https://versantus.co.uk" target="_blank" rel="noopener">Versantus</a></p>
@@ -437,422 +295,6 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   </footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script>
-(() => {
-  // ---------- dimensions (cm) ----------
-  const N = 8, W = 4.6, H = 6, D = 2.6, GAP = 0.3, PITCH = W + GAP;
-  const AXLE_Y = 8.8, BASE_T = 1.6, POST_W = 1.8;
-  const SPAN = N * PITCH - GAP;               // width taken by the blocks
-  const INNER = SPAN + 0.6;                    // clear space between the posts
-  const POST_X = INNER / 2 + POST_W / 2;
-  const POST_H = AXLE_Y + H / 2 + 0.9;
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const DUR = reduceMotion ? 120 : 300;
-
-  // ---------- seeded random ----------
-  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
-
-  // ---------- textures ----------
-  function woodCanvas(w, h, seed, base, dark) {
-    const c = document.createElement('canvas'); c.width = w; c.height = h;
-    const g = c.getContext('2d'), r = rng(seed);
-    g.fillStyle = base; g.fillRect(0, 0, w, h);
-    // broad colour drifts
-    for (let i = 0; i < 6; i++) {
-      const x = r() * w, gr = g.createLinearGradient(x - w * 0.3, 0, x + w * 0.3, 0);
-      gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, `rgba(${dark},${0.05 + r() * 0.07})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
-      g.fillStyle = gr; g.fillRect(0, 0, w, h);
-    }
-    // grain lines running vertically
-    const lines = 46 + Math.floor(r() * 20), phase = r() * 10, amp = 4 + r() * 10;
-    for (let i = 0; i < lines; i++) {
-      const x0 = (i / lines) * w + r() * 6, a = 0.04 + r() * 0.14;
-      g.strokeStyle = `rgba(${dark},${a})`; g.lineWidth = 0.6 + r() * 2.2;
-      g.beginPath();
-      for (let y = 0; y <= h; y += 8) {
-        const x = x0 + Math.sin(y / h * 3 + phase + i * 0.05) * amp + Math.sin(y / 37 + i) * 1.2;
-        y ? g.lineTo(x, y) : g.moveTo(x, y);
-      }
-      g.stroke();
-    }
-    // a knot now and then
-    if (r() < 0.35) {
-      const kx = r() * w, ky = r() * h, kr = 6 + r() * 10;
-      for (let k = 5; k > 0; k--) { g.strokeStyle = `rgba(${dark},${0.12 + 0.05 * k})`; g.lineWidth = 1.4; g.beginPath(); g.ellipse(kx, ky, kr * k * 0.5, kr * k, 0, 0, Math.PI * 2); g.stroke(); }
-    }
-    return { c, g };
-  }
-  function scorchEdges(g, w, h, strength) {
-    const e = Math.min(w, h) * 0.16;
-    const sides = [
-      [0, 0, e, 0, 0, 0, e, h], [w, 0, w - e, 0, w - e, 0, e, h],
-      [0, 0, 0, e, 0, 0, w, e], [0, h, 0, h - e, 0, h - e, w, e]
-    ];
-    for (const [x0, y0, x1, y1, rx, ry, rw, rh] of sides) {
-      const gr = g.createLinearGradient(x0, y0, x1, y1);
-      gr.addColorStop(0, `rgba(70,35,12,${strength})`); gr.addColorStop(1, 'rgba(70,35,12,0)');
-      g.fillStyle = gr; g.fillRect(rx, ry, rw, rh);
-    }
-  }
-  function burnStroke(g, draw, lw) {
-    g.save(); g.lineCap = 'round';
-    g.strokeStyle = 'rgba(90,40,10,0.35)'; g.lineWidth = lw * 2.1; g.filter = 'blur(6px)'; draw(); g.stroke();
-    g.filter = 'blur(1.2px)'; g.strokeStyle = '#4a2410'; g.lineWidth = lw; draw(); g.stroke();
-    g.filter = 'none'; g.strokeStyle = 'rgba(25,10,3,0.75)'; g.lineWidth = lw * 0.45; draw(); g.stroke();
-    g.restore();
-  }
-  const PINE = '#d6a75e', PINE_DARK = '96,55,18';
-  function tex(c) { const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t; }
-  function faceTex(seed, digit) {
-    const w = 368, h = 480, { c, g } = woodCanvas(w, h, seed, PINE, PINE_DARK);
-    scorchEdges(g, w, h, 0.38);
-    const lw = w * 0.075;
-    if (digit === 0) burnStroke(g, () => { g.beginPath(); g.ellipse(w / 2, h / 2, w * 0.22, h * 0.31, 0, 0, Math.PI * 2); }, lw);
-    if (digit === 1) burnStroke(g, () => { g.beginPath(); g.moveTo(w / 2, h * 0.2); g.lineTo(w / 2, h * 0.8); }, lw);
-    return tex(c);
-  }
-  // place value burnt into the top and bottom edges; both read from the front when on top
-  function valueTex(seed, n) {
-    const w = 368, h = 208, { c, g } = woodCanvas(w, h, seed, PINE, PINE_DARK);
-    scorchEdges(g, w, h, 0.3);
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.font = `700 ${n > 99 ? 112 : 128}px Georgia, "Times New Roman", serif`;
-    g.filter = 'blur(5px)'; g.fillStyle = 'rgba(90,40,10,0.4)'; g.fillText(String(n), w / 2, h / 2 + 6);
-    g.filter = 'blur(0.8px)'; g.fillStyle = '#4a2410'; g.fillText(String(n), w / 2, h / 2 + 6);
-    g.filter = 'none';
-    return tex(c);
-  }
-  function plainTex(seed, w = 256, h = 256, base = PINE, dark = PINE_DARK, edge = 0.3) {
-    const { c, g } = woodCanvas(w, h, seed, base, dark); if (edge) scorchEdges(g, w, h, edge); return tex(c);
-  }
-  function longTex(seed, base = PINE, dark = PINE_DARK) {
-    // grain runs along the length: draw vertical then rotate the texture
-    const t = plainTex(seed, 256, 1024, base, dark, 0.18);
-    t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; return t;
-  }
-
-  // ---------- renderer / scene ----------
-  const stage = document.getElementById('stage');
-  let renderer;
-  try {
-    if (!window.THREE) throw new Error('three.js did not load');
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  } catch (e) {
-    stage.insertAdjacentHTML('beforeend', '<p class="nogl">This browser could not start 3D graphics (WebGL), so the model cannot be shown here. Try another browser, or turn on hardware acceleration. The build guide and prompts still work.</p>');
-    return;
-  }
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0x000000, 0);
-  stage.prepend(renderer.domElement);
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(32, 2, 1, 600);
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, AXLE_Y - 2.4, 0);
-  controls.enableDamping = true; controls.enablePan = false;
-  controls.minDistance = 30; controls.maxDistance = 220;
-  controls.maxPolarAngle = Math.PI * 0.62;
-
-  scene.add(new THREE.HemisphereLight(0xfff4e6, 0x6b6f75, 0.75));
-  const key = new THREE.DirectionalLight(0xfff1dc, 0.85);
-  key.position.set(-18, 40, 34); key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
-  Object.assign(key.shadow.camera, { left: -32, right: 32, top: 26, bottom: -12, near: 5, far: 120 });
-  key.shadow.bias = -0.0006; key.shadow.radius = 3;
-  scene.add(key);
-  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.3); fill.position.set(26, 10, 20); scene.add(fill);
-
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.ShadowMaterial({ opacity: 0.22 }));
-  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-
-  const std = (map, rough = 0.78) => new THREE.MeshStandardMaterial({ map, roughness: rough, metalness: 0 });
-  function box(w, h, d, mats, x, y, z) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats);
-    m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; return m;
-  }
-
-  // ---------- frame ----------
-  const frame = new THREE.Group(); scene.add(frame);
-  const baseLen = INNER + POST_W * 2;
-  const baseMat = std(longTex(11));
-  const BASE_D = 7.5;
-  frame.add(box(baseLen, BASE_T, BASE_D, baseMat, 0, BASE_T / 2, 0));
-  frame.add(box(INNER, 0.9, 0.9, std(longTex(12)), 0, BASE_T + 0.45, BASE_D / 2 - 0.45));   // front lip of the tray
-  for (const s of [-1, 1]) {
-    const endMat = std(plainTex(20 + s, 128, 512, PINE, PINE_DARK, 0.22));
-    const post = box(POST_W, POST_H, 4.2, endMat, s * POST_X, POST_H / 2, 0);
-    frame.add(post);
-    // dowel end showing through the post
-    const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, POST_W + 0.3, 20), std(null, 0.6));
-    peg.material.color.set(0x8a5a2b); peg.rotation.z = Math.PI / 2; peg.position.set(s * POST_X, AXLE_Y, 0);
-    frame.add(peg);
-  }
-  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, INNER, 16), std(null));
-  axle.material.color.set(0x9a6a36); axle.rotation.z = Math.PI / 2; axle.position.y = AXLE_Y; frame.add(axle);
-
-  // ---------- blocks ----------
-  // i = 0 is the least significant bit (right-hand end). Gates fall to the left, toward bit i+1.
-  // Each block is a flat slab: 0 on the front, 1 on the back (burnt upside down so it reads
-  // correctly once the slab has turned over). A push turns the slab half a turn, top going back.
-  //
-  // The swing gate is pinned near one corner of the 1 face. In block-local coordinates its angle
-  // phi runs from GATE_LOCK (pointing local -x) to GATE_OPEN (pointing local -y, nearly).
-  //   1 at the back:  the pin is at the bottom, so the gate hangs down along the face. Open.
-  //   1 at the front: the pin is at the top, the gate stands up, topples left onto its stop and
-  //                   lies across the front of the next block. Locked, ready to carry.
-  const GATE_LOCK = Math.PI, GATE_OPEN = Math.PI * 1.5 - 0.12;
-  const GATE_L = 2.7, GATE_TAIL = 0.35, GATE_W = 0.75, GATE_T = 0.4;
-  const PIN = { x: -W / 2 + 0.6, y: -H / 2 + 1.25, z: -D / 2 - GATE_T / 2 - 0.08 };
-  const walnut = std(plainTex(99, 128, 128, '#5a3520', '25,12,5', 0), 0.6);
-  const brass = new THREE.MeshStandardMaterial({ color: 0x9c7a3c, roughness: 0.4, metalness: 0.6 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x2a170c, roughness: 0.7 });
-  const blocks = [];
-  for (let i = 0; i < N; i++) {
-    const pivot = new THREE.Group();
-    pivot.position.set((N / 2 - 0.5 - i) * PITCH, AXLE_Y, 0);
-    const s = 100 + i * 17;
-    // BoxGeometry face order: +x, -x, +y, -y, +z, -z
-    const mats = [
-      std(plainTex(s + 1, 64, 256)), std(plainTex(s + 2, 64, 256)),
-      std(valueTex(s + 3, 1 << i)), std(valueTex(s + 4, 1 << i)),   // top and bottom: place value
-      std(faceTex(s + 5, 0)),            // front: the 0
-      std(faceTex(s + 6, 1))             // back: the 1, carries the gate
-    ];
-    const body = box(W, H, D, mats, 0, 0, 0);
-    body.userData.bit = i;
-    pivot.add(body);
-    let gate = null;
-    if (i < N - 1) {
-      gate = new THREE.Group();
-      gate.position.set(PIN.x, PIN.y, PIN.z);
-      const bar = box(GATE_L + GATE_TAIL, GATE_W, GATE_T, walnut, (GATE_L - GATE_TAIL) / 2, 0, 0);
-      bar.userData.bit = i;
-      gate.add(bar);
-      pivot.add(gate);
-      // pivot pin through the gate
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, GATE_T + 0.25, 12), brass);
-      pin.rotation.x = Math.PI / 2; pin.position.set(PIN.x, PIN.y, PIN.z); pivot.add(pin);
-      // stop pegs: one holds the gate level when locked, one keeps it hanging just off vertical when open
-      const peg = (x, y) => {
-        const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6, 10), dark);
-        p.rotation.x = Math.PI / 2; p.position.set(x, y, -D / 2 - 0.3); p.castShadow = true; pivot.add(p);
-      };
-      peg(PIN.x + 0.05, PIN.y + GATE_W / 2 + 0.16);     // under the gate when locked (local +y is world down then)
-      peg(PIN.x + 0.43, PIN.y - 0.8);                   // keeps the open gate leaning slightly toward the lock side
-    }
-    scene.add(pivot);
-    blocks.push({ pivot, gate, phi: GATE_OPEN, omega: 0, state: 0, angle: 0, anim: null });
-  }
-
-  // ---------- motion ----------
-  // Every flip is half a turn in the same direction (top goes back), so the angle keeps decreasing.
-  const easeOutBack = t => { const c1 = 0.9, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
-  // Pushes and carries roll a block over the top (angle decreases). A 1 set back to 0 by hand
-  // (or by Reset) turns back the way it came instead.
-  function flip(i, to, { onCarry, onDone, back = false } = {}) {
-    const b = blocks[i];
-    if (b.state === to && !b.anim) return onDone && onDone();
-    b.state = to;
-    const from = b.anim ? b.anim.to : b.angle;
-    b.anim = { from: b.angle, to: from + (back ? Math.PI : -Math.PI), t0: performance.now(), onCarry, onDone, carried: false };
-    click(to ? 1 : 0.8);
-  }
-  // Gravity on the gate. World "up" component of the gate direction is sin(phi)·cos(theta);
-  // the gate swings to lower it, between its two stop pegs.
-  function stepGate(b, dt) {
-    if (!b.gate) return;
-    const k = 70, c = 7;
-    b.omega += (-k * Math.cos(b.phi) * Math.cos(b.angle) - c * b.omega) * dt;
-    b.phi += b.omega * dt;
-    if (b.phi < GATE_LOCK) { b.phi = GATE_LOCK; if (b.omega < 0) { if (b.omega < -4) tick2(); b.omega *= -0.25; } }
-    if (b.phi > GATE_OPEN) { b.phi = GATE_OPEN; if (b.omega > 0) b.omega *= -0.25; }
-    b.gate.rotation.z = b.phi;
-  }
-  function tick2() { click(1.8, 0); }
-
-  let pending = 0, running = false, pushes = 0;
-  const statusEl = document.getElementById('status');
-  function push() {
-    ensureAudio();
-    pending++;
-    if (!running) step();
-  }
-  function step() {
-    if (pending <= 0) { running = false; return; }
-    pending--; running = true; pushes++;
-    ripple(0, 0);
-  }
-  function ripple(i, depth) {
-    if (i >= N) {
-      say('Overflow: the carry fell off the left end. Back to zero.');
-      return finish();
-    }
-    const b = blocks[i];
-    if (b.state === 0) {
-      flip(i, 1, { onDone: finish });
-      say(depth ? `Carry rippled through ${depth} block${depth > 1 ? 's' : ''} and set bit ${i}.` : 'Bit 0 set.');
-    } else {
-      flip(i, 0, { onCarry: () => ripple(i + 1, depth + 1) });
-    }
-  }
-  function finish() { setTimeout(step, reduceMotion ? 20 : 60); }
-  function say(t) { statusEl.textContent = t; }
-
-  function handFlip(i) {
-    ensureAudio();
-    if (blocks[i].anim) return;
-    flip(i, blocks[i].state ? 0 : 1, { back: blocks[i].state === 1 });
-    say(`Bit ${i} flipped by hand. No carry.`);
-  }
-
-  // ---------- readout ----------
-  const binEl = document.getElementById('bin'), decEl = document.getElementById('dec'), hexEl = document.getElementById('hex');
-  let lastVal = -1;
-  function readout() {
-    let v = 0; for (let i = 0; i < N; i++) v |= blocks[i].state << i;
-    if (v === lastVal) return; lastVal = v;
-    const s = v.toString(2).padStart(8, '0');
-    binEl.innerHTML = `<span class="nib">${s.slice(0, 4)}</span>${s.slice(4)}`;
-    decEl.textContent = v; hexEl.textContent = v.toString(16).toUpperCase().padStart(2, '0');
-  }
-
-  // ---------- sound: a dry wooden clack ----------
-  let ac = null, noiseBuf = null, muted = false;
-  function ensureAudio() {
-    if (ac) return;
-    try {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.06, ac.sampleRate);
-      const d = noiseBuf.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = (Math.random() * 2 - 1) * Math.exp(-k / (d.length * 0.12));
-    } catch (e) { ac = null; }
-  }
-  function click(pitch, delay = DUR / 1000 * 0.75) {
-    if (!ac || muted) return;
-    const t = ac.currentTime + delay;
-    const src = ac.createBufferSource(); src.buffer = noiseBuf; src.playbackRate.value = pitch * (0.9 + Math.random() * 0.2);
-    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400 * pitch; bp.Q.value = 3;
-    const gn = ac.createGain(); gn.gain.value = 0.5;
-    src.connect(bp).connect(gn).connect(ac.destination); src.start(t);
-  }
-
-  // ---------- controls ----------
-  const autoBtn = document.getElementById('auto');
-  let autoTimer = null;
-  function setAuto(on) {
-    autoBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    clearInterval(autoTimer); autoTimer = null;
-    if (on) { ensureAudio(); autoTimer = setInterval(() => { if (!running && pending === 0) push(); }, reduceMotion ? 300 : 650); }
-  }
-  document.getElementById('push').onclick = push;
-  autoBtn.onclick = () => setAuto(autoBtn.getAttribute('aria-pressed') !== 'true');
-  document.getElementById('reset').onclick = () => {
-    setAuto(false); pending = 0;
-    blocks.forEach((b, i) => { if (b.state) setTimeout(() => flip(i, 0, { back: true }), i * 40); });
-    say('Reset. All blocks rolled back to 0.');
-  };
-  document.getElementById('view').onclick = () => frontView(true);
-  stage.addEventListener('keydown', e => {
-    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); push(); }
-  });
-  document.addEventListener('keydown', e => {
-    if (e.target.closest('button, input, textarea')) return;
-    if (e.key === ' ' && document.activeElement === document.body) { e.preventDefault(); push(); }
-  });
-
-  // click on blocks (ignore drags)
-  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
-  let downAt = null;
-  renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
-  renderer.domElement.addEventListener('pointerup', e => {
-    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
-    const r = renderer.domElement.getBoundingClientRect();
-    ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    ray.setFromCamera(ptr, camera);
-    const hit = ray.intersectObjects(blocks.map(b => b.pivot), true).find(h => h.object.userData.bit !== undefined);
-    if (!hit) return;
-    const bit = hit.object.userData.bit;
-    bit === 0 ? push() : handFlip(bit);
-  });
-  renderer.domElement.addEventListener('pointermove', e => {
-    if (e.buttons) return;
-    const r = renderer.domElement.getBoundingClientRect();
-    ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    ray.setFromCamera(ptr, camera);
-    const over = ray.intersectObjects(blocks.map(b => b.pivot), true).some(h => h.object.userData.bit !== undefined);
-    stage.style.cursor = over ? 'pointer' : '';
-  });
-
-  // ---------- camera fitting ----------
-  const viewDir = new THREE.Vector3(-0.12, 0.34, 1).normalize();
-  let camAnim = null;
-  function fitDistance() {
-    const aspect = camera.aspect, vf = THREE.MathUtils.degToRad(camera.fov);
-    const hf = 2 * Math.atan(Math.tan(vf / 2) * aspect);
-    const halfW = baseLen / 2 + 2.5, halfH = POST_H / 2 + 3;
-    return Math.max(halfW / Math.tan(hf / 2), halfH / Math.tan(vf / 2)) + D;
-  }
-  function frontView(animate) {
-    const to = controls.target.clone().add(viewDir.clone().multiplyScalar(fitDistance()));
-    if (!animate || reduceMotion) { camera.position.copy(to); return; }
-    camAnim = { from: camera.position.clone(), to, t0: performance.now() };
-  }
-  function resize() {
-    const w = stage.clientWidth, h = stage.clientHeight;
-    if (!w || !h) return;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.updateProjectionMatrix();
-    const dir = camera.position.clone().sub(controls.target);
-    if (dir.lengthSq() < 1) frontView(false);
-    else camera.position.copy(controls.target).add(dir.normalize().multiplyScalar(fitDistance()));
-  }
-  new ResizeObserver(resize).observe(stage);
-  resize();
-
-  // ---------- loop ----------
-  let lastT = performance.now();
-  function tick(now) {
-    const dt = Math.max(0, Math.min(0.05, (now - lastT) / 1000)); lastT = Math.max(lastT, now);
-    for (const b of blocks) {
-      const a = b.anim;
-      if (a) {
-        const p = Math.min(1, (now - a.t0) / DUR);
-        b.angle = a.from + (a.to - a.from) * easeOutBack(p);
-        b.pivot.rotation.x = b.angle;
-        // the locked gate is swept up and over the next block's top edge about a third of the way round
-        if (!a.carried && p >= 0.2) { a.carried = true; a.onCarry && a.onCarry(); }
-        if (p >= 1) {
-          b.angle = a.to % (Math.PI * 2); a.to = b.angle; b.pivot.rotation.x = b.angle;
-          b.anim = null; a.onDone && a.onDone();
-        }
-      }
-      for (let k = 0; k < 4; k++) stepGate(b, dt / 4);
-    }
-    if (camAnim) {
-      const p = Math.min(1, (now - camAnim.t0) / 700), e = 1 - Math.pow(1 - p, 3);
-      camera.position.lerpVectors(camAnim.from, camAnim.to, e);
-      if (p >= 1) camAnim = null;
-    }
-    readout();
-    controls.update();
-    renderer.render(scene, camera);
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-
-  // let the page router (separate script) pause or resize the model
-  window.counterView = { show: resize, hide: () => setAuto(false) };
-
-
-  // open on the number in the third photo, 0001 0000, so the tab is visible at rest
-  { const b = blocks[4]; b.state = 1; b.angle = -Math.PI; b.pivot.rotation.x = b.angle; b.phi = GATE_LOCK; b.gate.rotation.z = b.phi; }
-  blocks.forEach(b => { if (b.gate && !b.state) b.gate.rotation.z = b.phi; });
-  say('Showing 0001 0000 (16), as in the photo. Press Space or Push +1 to count on.');
-})();
-</script>
 <script>
 // ---------- Build guide: flat-pack style line drawings ----------
 (() => {
@@ -1200,19 +642,17 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
 })();
 </script>
 <script>
-// ---------- views (#model / #build / #prompts), independent of the 3D model ----------
+// ---------- views (#rendered / #build) ----------
 (() => {
   const views = {};
-  for (const k of ['model', 'rendered', 'build', 'prompts']) views[k] = document.getElementById('view-' + k);
+  for (const k of ['rendered', 'build']) views[k] = document.getElementById('view-' + k);
   function route() {
-    const h = location.hash.slice(1), v = views[h] ? h : 'model';
+    const h = location.hash.slice(1), v = views[h] ? h : 'rendered';     // old #model and #prompts links land here
     for (const k in views) {
       views[k].hidden = k !== v;
       const t = document.getElementById('tab-' + k);
       if (k === v) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
     }
-    const cv = window.counterView;
-    if (cv) { try { v === 'model' ? cv.show() : cv.hide(); } catch (e) {} }
     const rv = window.renderedView;
     if (rv) { try { v === 'rendered' ? rv.show() : rv.hide(); } catch (e) {} }
   }
@@ -1234,7 +674,7 @@ window.renderedView = {
   show() { active = true; if (!started) { started = true; boot(); } else if (api) api.resize(); },
   hide() { active = false; if (api) api.setAuto(false); },
 };
-if (location.hash === '#rendered') window.renderedView.show();
+if (!location.hash || location.hash !== '#build') window.renderedView.show();
 
 async function boot() {
   const loadingEl = document.getElementById('r-loading');
