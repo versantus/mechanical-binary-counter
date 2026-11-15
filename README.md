@@ -21,6 +21,7 @@ The stills are ray traced in Blender Cycles. The video is rendered with Blender'
 ## What's in the page
 
 - **Model:** a 3D counter built with three.js. Push the right-hand block (or press Space) to count, click other blocks to flip them by hand, and drag to turn the model.
+- **Rendered:** the same counter with the textures from the ray-traced render baked in (`assets/counter.gltf.json`), lit like the render. Still fully interactive: push, flip, drag and zoom.
 - **Build your own:** a parts sheet, a tools list and eight illustrated steps for making a real one.
 - **Prompts used:** the prompts used to build this page with Claude Code.
 
