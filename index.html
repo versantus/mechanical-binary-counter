@@ -170,6 +170,7 @@ td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-
 .prompts h2.big { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px); margin: 0 0 8px; }
 .whatis h2 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 4px; }
 .whatis p { margin: 0; max-width: 72ch; color: var(--muted); }
+.loading { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; color: var(--muted); font-family: var(--mono); font-size: 13px; pointer-events: none; }
 .nogl { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
 .brand { display: inline-block; line-height: 0; margin-bottom: 6px; align-self: start; justify-self: start; }
 .vlogo { height: 26px; width: auto; display: block; }
@@ -203,6 +204,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
     </div>
     <nav class="tabs" aria-label="Views">
       <a href="#model" id="tab-model">Model</a>
+      <a href="#rendered" id="tab-rendered">Rendered</a>
       <a href="#build" id="tab-build">Build your own</a>
       <a href="#prompts" id="tab-prompts">Prompts used</a>
     </nav>
@@ -254,6 +256,29 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
     </section>
   </div>
   <p class="cta"><a href="#build">Build a real one: parts list and instructions →</a></p>
+  </div>
+
+  <div id="view-rendered" class="view" hidden>
+    <section class="whatis">
+      <h2>Rendered</h2>
+      <p>The same counter with the wood, burn marks and lighting from the ray-traced render baked in. Drag to turn it, scroll or pinch to zoom, and click the right-hand block to count. Click any other block to flip it by hand.</p>
+    </section>
+    <div class="stage" id="stage-r" tabindex="0" aria-label="Rendered 3D model of the wooden binary counter. Press Space to push the right-hand block.">
+      <p class="loading" id="r-loading">Loading the rendered model…</p>
+      <span class="hint">click right block to push · click others to flip by hand · drag to turn · scroll to zoom</span>
+    </div>
+    <div class="panel">
+      <div class="controls">
+        <button class="primary" id="r-push">Push +1</button>
+        <button id="r-auto" aria-pressed="false">Count continuously</button>
+        <button id="r-reset">Reset to zero</button>
+        <button id="r-view">Front view</button>
+      </div>
+      <div class="readout" aria-live="polite">
+        <div><span class="label">Binary</span><span class="val bits" id="r-bin">0010 0111</span></div>
+        <div><span class="label">Decimal</span><span class="val" id="r-dec">39</span></div>
+      </div>
+    </div>
   </div>
 
   <article id="view-build" class="view build" hidden>
@@ -788,7 +813,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   // ---------- loop ----------
   let lastT = performance.now();
   function tick(now) {
-    const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    const dt = Math.max(0, Math.min(0.05, (now - lastT) / 1000)); lastT = Math.max(lastT, now);
     for (const b of blocks) {
       const a = b.anim;
       if (a) {
@@ -1176,7 +1201,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
 // ---------- views (#model / #build / #prompts), independent of the 3D model ----------
 (() => {
   const views = {};
-  for (const k of ['model', 'build', 'prompts']) views[k] = document.getElementById('view-' + k);
+  for (const k of ['model', 'rendered', 'build', 'prompts']) views[k] = document.getElementById('view-' + k);
   function route() {
     const h = location.hash.slice(1), v = views[h] ? h : 'model';
     for (const k in views) {
@@ -1186,8 +1211,197 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
     }
     const cv = window.counterView;
     if (cv) { try { v === 'model' ? cv.show() : cv.hide(); } catch (e) {} }
+    const rv = window.renderedView;
+    if (rv) { try { v === 'rendered' ? rv.show() : rv.hide(); } catch (e) {} }
   }
   addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
   route();
 })();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+// ---------- Rendered view: baked textures from the Cycles render, loaded only when the tab opens ----------
+const stage = document.getElementById('stage-r');
+let started = false, active = false, api = null;
+window.renderedView = {
+  show() { active = true; if (!started) { started = true; boot(); } else if (api) api.resize(); },
+  hide() { active = false; if (api) api.setAuto(false); },
+};
+if (location.hash === '#rendered') window.renderedView.show();
+
+async function boot() {
+  const loadingEl = document.getElementById('r-loading');
+  let THREE, GLTFLoader, OrbitControls, RoomEnvironment;
+  try {
+    THREE = await import('three');
+    ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+    ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+    ({ RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js'));
+  } catch (e) { loadingEl.textContent = 'Could not load the 3D library. Check your connection and reload.'; return; }
+
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+  catch (e) { loadingEl.textContent = 'This browser could not start 3D graphics (WebGL), so the rendered model cannot be shown.'; return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.setClearColor(0x000000, 0);
+  stage.prepend(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.4;
+
+  // lights placed like the Blender key, fill and rim (metres, y up, z toward the viewer)
+  const key = new THREE.DirectionalLight(0xffeedd, 3.2);
+  key.position.set(-0.55, 0.75, 0.75); key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 5; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.0015;
+  Object.assign(key.shadow.camera, { left: -0.32, right: 0.32, top: 0.24, bottom: -0.1, near: 0.2, far: 2.5 });
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffe9d2, 1.1); rim.position.set(0.2, 0.55, -0.8); scene.add(rim);
+  const fill = new THREE.DirectionalLight(0xe6eeff, 0.35); fill.position.set(0.8, 0.3, 0.5); scene.add(fill);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.ShadowMaterial({ opacity: 0.28 }));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+  const camera = new THREE.PerspectiveCamera(30, 2, 0.01, 20);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0.07, 0);
+  controls.enableDamping = true; controls.enablePan = false;
+  controls.minDistance = 0.18; controls.maxDistance = 2.2; controls.maxPolarAngle = Math.PI * 0.6;
+  const viewDir = new THREE.Vector3(-0.24, 0.27, 0.9).normalize();
+
+  const gltf = await new GLTFLoader().loadAsync('assets/counter.gltf.json').catch(() => null);
+  if (!gltf) { loadingEl.textContent = 'Could not load the model file.'; return; }
+  gltf.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (o.material.map) o.material.map.anisotropy = 8; } });
+  scene.add(gltf.scene);
+  loadingEl.remove();
+
+  // ---------- counter state (same rules as the Model tab) ----------
+  const N = 8, DUR = matchMedia('(prefers-reduced-motion: reduce)').matches ? 120 : 380;
+  const LOCK = Math.PI, OPEN = Math.PI * 1.5 - 0.12;
+  const blocks = [];
+  for (let i = 0; i < N; i++) {
+    const pivot = gltf.scene.getObjectByName(`Block_${1 << i}_pivot`);
+    const gate = gltf.scene.getObjectByName(`Gate_${1 << i}_pivot`) || null;
+    pivot.traverse(o => { o.userData.bit = i; });
+    blocks.push({ pivot, gate, state: 0, angle: 0, anim: null, phi: OPEN, omega: 0 });
+  }
+  // open on 0010 0111 (39), as in the render
+  for (const i of [0, 1, 2, 5]) { const b = blocks[i]; b.state = 1; b.angle = -Math.PI; b.phi = LOCK; }
+
+  const easeOutBack = t => 1 + 1.9 * Math.pow(t - 1, 3) + 0.9 * Math.pow(t - 1, 2);
+  function flip(i, to, { onCarry, onDone } = {}) {
+    const b = blocks[i];
+    if (b.state === to && !b.anim) return onDone && onDone();
+    b.state = to;
+    const base = b.anim ? b.anim.to : b.angle;
+    b.anim = { from: b.angle, to: base - Math.PI, t0: performance.now(), onCarry, onDone, carried: false };
+  }
+  let pending = 0, running = false;
+  function push() { pending++; if (!running) step(); }
+  function step() { if (pending <= 0) { running = false; return; } pending--; running = true; ripple(0); }
+  function ripple(i) {
+    if (i >= N) return setTimeout(step, 60);
+    const b = blocks[i];
+    if (b.state === 0) flip(i, 1, { onDone: () => setTimeout(step, 60) });
+    else flip(i, 0, { onCarry: () => ripple(i + 1) });
+  }
+  function handFlip(i) { if (!blocks[i].anim) flip(i, blocks[i].state ? 0 : 1); }
+
+  const binEl = document.getElementById('r-bin'), decEl = document.getElementById('r-dec');
+  let lastVal = -1;
+  function readout() {
+    let v = 0; blocks.forEach((b, i) => { v |= b.state << i; });
+    if (v === lastVal) return; lastVal = v;
+    const s = v.toString(2).padStart(8, '0');
+    binEl.innerHTML = `<span class="nib">${s.slice(0, 4)}</span>${s.slice(4)}`; decEl.textContent = v;
+  }
+
+  const autoBtn = document.getElementById('r-auto'); let autoTimer = null;
+  function setAuto(on) {
+    autoBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    clearInterval(autoTimer); autoTimer = on ? setInterval(() => { if (!running && !pending) push(); }, 750) : null;
+  }
+  document.getElementById('r-push').onclick = push;
+  autoBtn.onclick = () => setAuto(autoBtn.getAttribute('aria-pressed') !== 'true');
+  document.getElementById('r-reset').onclick = () => { setAuto(false); pending = 0; blocks.forEach((b, i) => { if (b.state) setTimeout(() => flip(i, 0), i * 50); }); };
+  stage.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); push(); } });
+
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let downAt = null;
+  const hitBit = e => {
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const h = ray.intersectObjects(blocks.map(b => b.pivot), true)[0];
+    return h ? h.object.userData.bit : undefined;
+  };
+  renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', e => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const bit = hitBit(e); if (bit === undefined) return;
+    bit === 0 ? push() : handFlip(bit);
+  });
+  renderer.domElement.addEventListener('pointermove', e => { if (!e.buttons) stage.style.cursor = hitBit(e) !== undefined ? 'pointer' : ''; });
+
+  // ---------- camera ----------
+  let camAnim = null;
+  function fitDistance() {
+    const vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+    return Math.max(0.25 / Math.tan(hf / 2), 0.09 / Math.tan(vf / 2)) + 0.04;
+  }
+  function frontView(animate) {
+    const to = controls.target.clone().add(viewDir.clone().multiplyScalar(fitDistance()));
+    if (!animate) { camera.position.copy(to); return; }
+    camAnim = { from: camera.position.clone(), to, t0: performance.now() };
+  }
+  document.getElementById('r-view').onclick = () => frontView(true);
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    if (camera.position.lengthSq() < 1e-6) frontView(false);
+  }
+  new ResizeObserver(resize).observe(stage); resize();
+
+  let lastT = performance.now();
+  function tick(now) {
+    requestAnimationFrame(tick);
+    const dt = Math.max(0, Math.min(0.05, (now - lastT) / 1000)); lastT = Math.max(lastT, now);
+    if (!active) return;
+    for (const b of blocks) {
+      const a = b.anim;
+      if (a) {
+        const p = Math.min(1, (now - a.t0) / DUR);
+        b.angle = a.from + (a.to - a.from) * easeOutBack(p);
+        if (!a.carried && p >= 0.2) { a.carried = true; a.onCarry && a.onCarry(); }
+        if (p >= 1) { b.angle = a.to % (Math.PI * 2); b.anim = null; a.onDone && a.onDone(); }
+      }
+      b.pivot.rotation.x = b.angle;
+      if (b.gate) {
+        for (let k = 0; k < 4; k++) {
+          const h = dt / 4;
+          b.omega += (-70 * Math.cos(b.phi) * Math.cos(b.angle) - 7 * b.omega) * h;
+          b.phi += b.omega * h;
+          if (b.phi < LOCK) { b.phi = LOCK; if (b.omega < 0) b.omega *= -0.25; }
+          if (b.phi > OPEN) { b.phi = OPEN; if (b.omega > 0) b.omega *= -0.25; }
+        }
+        b.gate.rotation.z = b.phi;
+      }
+    }
+    if (camAnim) {
+      const p = Math.min(1, (now - camAnim.t0) / 700), e = 1 - Math.pow(1 - p, 3);
+      camera.position.lerpVectors(camAnim.from, camAnim.to, e); if (p >= 1) camAnim = null;
+    }
+    readout(); controls.update(); renderer.render(scene, camera);
+  }
+  requestAnimationFrame(tick);
+  api = { resize, setAuto };
+}
 </script>
