@@ -166,6 +166,7 @@ td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-
 .prompts h2.big { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px); margin: 0 0 8px; }
 .whatis h2 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 4px; }
 .whatis p { margin: 0; max-width: 72ch; color: var(--muted); }
+.nogl { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
 kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; }
 @media (max-width: 560px) { .stage { aspect-ratio: 4 / 3; } .val { font-size: 18px; } }
 </style>
@@ -404,7 +405,14 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
 
   // ---------- renderer / scene ----------
   const stage = document.getElementById('stage');
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  let renderer;
+  try {
+    if (!window.THREE) throw new Error('three.js did not load');
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  } catch (e) {
+    stage.insertAdjacentHTML('beforeend', '<p class="nogl">This browser could not start 3D graphics (WebGL), so the model cannot be shown here. Try another browser, or turn on hardware acceleration. The build guide and prompts still work.</p>');
+    return;
+  }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -703,20 +711,9 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   }
   requestAnimationFrame(tick);
 
-  // ---------- views (#model / #build) ----------
-  const views = {};
-  for (const k of ['model', 'build', 'prompts']) views[k] = document.getElementById('view-' + k);
-  function route() {
-    const h = location.hash.slice(1), v = views[h] ? h : 'model';
-    for (const k in views) {
-      views[k].hidden = k !== v;
-      const t = document.getElementById('tab-' + k);
-      if (k === v) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
-    }
-    if (v === 'model') resize(); else setAuto(false);
-  }
-  addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
-  route();
+  // let the page router (separate script) pause or resize the model
+  window.counterView = { show: resize, hide: () => setAuto(false) };
+
 
   // open on the number in the third photo, 0001 0000, so the tab is visible at rest
   { const b = blocks[4]; b.state = 1; b.angle = -Math.PI; b.pivot.rotation.x = b.angle; b.phi = GATE_LOCK; b.gate.rotation.z = b.phi; }
@@ -1070,4 +1067,22 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
     </li>`).join('');
 })();
 </script>
-
+<script>
+// ---------- views (#model / #build / #prompts), independent of the 3D model ----------
+(() => {
+  const views = {};
+  for (const k of ['model', 'build', 'prompts']) views[k] = document.getElementById('view-' + k);
+  function route() {
+    const h = location.hash.slice(1), v = views[h] ? h : 'model';
+    for (const k in views) {
+      views[k].hidden = k !== v;
+      const t = document.getElementById('tab-' + k);
+      if (k === v) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+    }
+    const cv = window.counterView;
+    if (cv) { try { v === 'model' ? cv.show() : cv.hide(); } catch (e) {} }
+  }
+  addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
+  route();
+})();
+</script>
