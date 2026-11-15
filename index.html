@@ -3,7 +3,7 @@
 <title>Wooden Binary Counter</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
 <style>
 /* Layout: one workbench stage (3D model) with a control strip and a readout beneath, notes below. */
 :root {
@@ -15,7 +15,7 @@
   --accent: #a3471b;      /* scorched pine */
   --accent-fg: #ffffff;
   --wood: #e2bd80; --wood-edge: #b88a4a; --burn: #4a2410; --walnut: #5a3520; --brass: #c9a24f;
-  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --display: "Outfit", "Helvetica Neue", Arial, sans-serif;
   --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
@@ -32,15 +32,19 @@
     --wood: #b98c4f; --wood-edge: #8a6230; --burn: #2e1407; --walnut: #2c170b; --brass: #c9a24f;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
 body {
   background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 28px 48px;
 }
-.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.view > * { min-width: 0; }
+html, body { overflow-x: clip; }
 header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; }
-h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(26px, 4vw, 38px); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
 .sub { color: var(--muted); margin: 0; font-size: 14px; }
 .stage {
   position: relative; width: 100%; aspect-ratio: 16 / 8.2; max-height: 66vh; max-width: 100%;
@@ -167,6 +171,19 @@ td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-
 .whatis h2 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 4px; }
 .whatis p { margin: 0; max-width: 72ch; color: var(--muted); }
 .nogl { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+.brand { display: inline-block; line-height: 0; margin-bottom: 6px; align-self: start; justify-self: start; }
+.vlogo { height: 26px; width: auto; display: block; }
+.vlogo-dark { display: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .vlogo-light { display: none; } :root:not([data-theme="light"]) .vlogo-dark { display: block; } }
+:root[data-theme="dark"] .vlogo-light { display: none; } :root[data-theme="dark"] .vlogo-dark { display: block; }
+header { align-items: center; justify-content: flex-start !important; gap: 12px 16px !important; }
+header .tabs { margin-left: auto; }
+.ghlink { display: inline-flex; align-items: center; gap: 6px; color: var(--fg); text-decoration: none; font-weight: 500; font-size: 14px; padding: 8px 12px; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.ghlink:hover { border-color: var(--muted); }
+.gh { flex: none; vertical-align: -3px; }
+.site-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; border-top: 1px solid var(--line); padding-top: 18px; margin-top: 12px; font-size: 14px; color: var(--muted); }
+.site-foot p { margin: 0; }
+.site-foot a { display: inline-flex; align-items: center; gap: 6px; }
 kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; }
 @media (max-width: 560px) { .stage { aspect-ratio: 4 / 3; } .val { font-size: 18px; } }
 </style>
@@ -174,6 +191,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
 <div class="wrap">
   <header>
     <div class="titles">
+      <a class="brand" href="https://versantus.co.uk" target="_blank" rel="noopener"><img class="vlogo vlogo-light " src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMzEyLjU4IDY3LjIxIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiB1cmwoI2xpbmVhci1ncmFkaWVudCk7CiAgICAgICAgZmlsbC1ydWxlOiBldmVub2RkOwogICAgICB9CiAgICA8L3N0eWxlPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJsaW5lYXItZ3JhZGllbnQiIHgxPSI1OS4yNyIgeTE9IjIuNzQiIHgyPSIxMi40IiB5Mj0iNTkuMTEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYTQ0NWIyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2YwMTQ2ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJtMzMuNjEsMGM1Ljk0LDAsMTEuNTMsMS41NSwxNi4zNyw0LjI1bC02LjksMTEuNDUtLjUzLS4yN2MtMi42OS0xLjMzLTUuNzMtMi4wNy04LjkzLTIuMDdoLS42M2MtMy43OS4xMy03LjMyLDEuMjgtMTAuMywzLjIxSDQuNjRsLjMxLS41MUMxMC44NSw2LjQzLDIxLjQ4LDAsMzMuNjEsMFptMjUuNjYsMi43M2wtMjYuMjUsNDIuOS0xMy41LTIyLjI5aC04LjQ0bC0zLjEzLTQuODRoMTQuMjFsMTEuMDYsMTcuMzJMNTMuMTYsMi43M2g2LjExWk0xOC4xOCwyNS4zM2wxNC45MiwyMy45OCwxNC42NC0yMy45OGg1Ljk0bC0yMC42NCwzMy42OUwxMi40LDI1LjMzaDUuNzhabTM5LjA3LTE1LjU5bC40NS40NmM1Ljg0LDYuMDEsOS40NSwxNC4xOCw5LjUsMjMuMjF2Ljk3Yy0uNDEsMTguMjEtMTUuMywzMi44NS0zMy42MSwzMi44NWgtLjU2QzE0Ljc1LDY2LjkxLDAsNTEuOTgsMCwzMy42MXYtLjc2Yy4xNC01Ljg1LDEuNzYtMTEuMzMsNC41Mi0xNi4wN2w5LjAzLDE0LjEyLS4wOC42N2MtLjA3LjY3LS4xLDEuMzUtLjEsMi4wNHYuNDljLjIxLDguNjIsNS44MSwxNS45MSwxMy41NSwxOC42Mmw0LjQ4LDcuMywxLjY1LDIuNywxLjY1LTIuNyw0LjIxLTYuODcuNDUtLjEzYzguMzgtMi40OCwxNC40OS0xMC4yMywxNC40OS0xOS40MXYtLjcxYy0uMDUtMS4xOC0uMTktMi4zMi0uNDMtMy40NGwxLjkxLTMuMTIsMS44MS0yLjk1aC02LjA2bC0uMzYtLjU5Yy0uMjQtLjM5LS41LS43Ni0uNzctMS4xM2w3LjMtMTEuOTNaIi8+CiAgPGc+CiAgICA8cGF0aCBkPSJtOTkuOTEsMjUuMjhoMi41NWwtNy4zMywyMC4zNWgtMi4zNGwtNy4yOS0yMC4zNWgyLjVsNC42OCwxMy4xN2MuNTQsMS41MS45NiwyLjk4LDEuMjgsNC40MS4zMy0xLjUuNzctMywxLjMxLTQuNDlsNC42NS0xMy4wOFoiLz4KICAgIDxwYXRoIGQ9Im0xMjUuNDMsNDUuNjNoLTExLjM0di0yMC4zNWgxMS4zNHYyLjFoLTguOTh2Ni41Nmg4LjQzdjIuMDloLTguNDN2Ny40OWg4Ljk4djIuMTJaIi8+CiAgICA8cGF0aCBkPSJtMTQxLjE0LDM3LjE2djguNDZoLTIuMzd2LTIwLjM1aDUuNThjMi41LDAsNC4zNC40OCw1LjUzLDEuNDMsMS4xOS45NiwxLjc5LDIuMzksMS43OSw0LjMxLDAsMi42OS0xLjM2LDQuNTEtNC4wOSw1LjQ2bDUuNTMsOS4xNGgtMi44bC00LjkzLTguNDZoLTQuMjRabTAtMi4wM2gzLjI0YzEuNjcsMCwyLjg5LS4zMywzLjY3LTEsLjc4LS42NiwxLjE3LTEuNjYsMS4xNy0yLjk5cy0uNC0yLjMxLTEuMTktMi45MWMtLjc5LS41OS0yLjA3LS44OS0zLjgyLS44OWgtMy4wOHY3Ljc4WiIvPgogICAgPHBhdGggZD0ibTE3Ni43MSw0MC4yMWMwLDEuNzktLjY1LDMuMTktMS45NSw0LjE5LTEuMywxLTMuMDYsMS41LTUuMjksMS41LTIuNDEsMC00LjI3LS4zMS01LjU3LS45M3YtMi4yOGMuODQuMzUsMS43NC42MywyLjczLjgzLjk4LjIsMS45Ni4zMSwyLjkyLjMxLDEuNTgsMCwyLjc2LS4zLDMuNTYtLjkuOC0uNiwxLjItMS40MywxLjItMi41LDAtLjctLjE0LTEuMjgtLjQyLTEuNzMtLjI4LS40NS0uNzYtLjg3LTEuNDItMS4yNS0uNjYtLjM4LTEuNjctLjgxLTMuMDMtMS4yOS0xLjg5LS42OC0zLjI0LTEuNDgtNC4wNi0yLjQxLS44MS0uOTMtMS4yMi0yLjE0LTEuMjItMy42MywwLTEuNTcuNTktMi44MiwxLjc3LTMuNzQsMS4xOC0uOTMsMi43NC0xLjM5LDQuNjgtMS4zOXMzLjg4LjM3LDUuNTgsMS4xMWwtLjc0LDIuMDZjLTEuNjgtLjctMy4zMS0xLjA2LTQuOS0xLjA2LTEuMjUsMC0yLjIzLjI3LTIuOTQuODEtLjcxLjU0LTEuMDYsMS4yOS0xLjA2LDIuMjQsMCwuNzEuMTMsMS4yOC4zOSwxLjczLjI2LjQ1LjcuODYsMS4zMSwxLjI0LjYyLjM4LDEuNTYuNzksMi44MywxLjI1LDIuMTMuNzYsMy42LDEuNTgsNC40MSwyLjQ1LjguODcsMS4yLDIsMS4yLDMuNFoiLz4KICAgIDxwYXRoIGQ9Im0yMDIuNSw0NS42M2wtMi41My02LjQ3aC04LjE2bC0yLjUsNi40N2gtMi4zOWw4LjA0LTIwLjQzaDEuOTlsOCwyMC40M2gtMi40NVptLTMuMjctOC42bC0yLjM3LTYuM2MtLjMxLS44LS42Mi0xLjc4LS45NS0yLjk0LS4yLjg5LS41LDEuODctLjg4LDIuOTRsLTIuMzksNi4zaDYuNThaIi8+CiAgICA8cGF0aCBkPSJtMjMyLjQ3LDQ1LjYzaC0yLjdsLTExLjEyLTE3LjA4aC0uMTFjLjE1LDIsLjIyLDMuODQuMjIsNS41MXYxMS41N2gtMi4xOXYtMjAuMzVoMi42N2wxMS4wOSwxNy4wMWguMTFjLS4wMi0uMjUtLjA2LTEuMDYtLjEzLTIuNDItLjA2LTEuMzYtLjA5LTIuMzMtLjA3LTIuOTF2LTExLjY4aDIuMjF2MjAuMzVaIi8+CiAgICA8cGF0aCBkPSJtMjUzLjE3LDQ1LjYzaC0yLjM3di0xOC4yNWgtNi40NHYtMi4xaDE1LjI1djIuMWgtNi40NHYxOC4yNVoiLz4KICAgIDxwYXRoIGQ9Im0yODYuODcsMjUuMjh2MTMuMTdjMCwyLjMyLS43LDQuMTQtMi4xLDUuNDctMS40LDEuMzMtMy4zMywxLjk5LTUuNzgsMS45OXMtNC4zNC0uNjctNS42OC0yYy0xLjM0LTEuMzQtMi4wMS0zLjE3LTIuMDEtNS41MXYtMTMuMTFoMi4zN3YxMy4yOGMwLDEuNy40NiwzLDEuMzksMy45MS45My45MSwyLjI5LDEuMzYsNC4wOSwxLjM2czMuMDQtLjQ2LDMuOTctMS4zN2MuOTMtLjkxLDEuMzktMi4yMiwxLjM5LTMuOTN2LTEzLjI1aDIuMzdaIi8+CiAgICA8cGF0aCBkPSJtMzEyLjU4LDQwLjIxYzAsMS43OS0uNjUsMy4xOS0xLjk1LDQuMTktMS4zLDEtMy4wNiwxLjUtNS4yOSwxLjUtMi40MSwwLTQuMjctLjMxLTUuNTctLjkzdi0yLjI4Yy44NC4zNSwxLjc0LjYzLDIuNzMuODMuOTguMiwxLjk2LjMxLDIuOTIuMzEsMS41OCwwLDIuNzYtLjMsMy41Ni0uOS44LS42LDEuMi0xLjQzLDEuMi0yLjUsMC0uNy0uMTQtMS4yOC0uNDItMS43My0uMjgtLjQ1LS43Ni0uODctMS40Mi0xLjI1LS42Ni0uMzgtMS42Ny0uODEtMy4wMy0xLjI5LTEuODktLjY4LTMuMjQtMS40OC00LjA2LTIuNDEtLjgxLS45My0xLjIyLTIuMTQtMS4yMi0zLjYzLDAtMS41Ny41OS0yLjgyLDEuNzctMy43NCwxLjE4LS45MywyLjc0LTEuMzksNC42OC0xLjM5czMuODguMzcsNS41OCwxLjExbC0uNzQsMi4wNmMtMS42OC0uNy0zLjMxLTEuMDYtNC45LTEuMDYtMS4yNSwwLTIuMjMuMjctMi45NC44MS0uNzEuNTQtMS4wNiwxLjI5LTEuMDYsMi4yNCwwLC43MS4xMywxLjI4LjM5LDEuNzMuMjYuNDUuNy44NiwxLjMxLDEuMjQuNjIuMzgsMS41Ni43OSwyLjgzLDEuMjUsMi4xMy43NiwzLjYsMS41OCw0LjQxLDIuNDUuOC44NywxLjIsMiwxLjIsMy40WiIvPgogIDwvZz4KPC9zdmc+" alt="Versantus" height="26"><img class="vlogo vlogo-dark " src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMzEyLjU4IDY3LjIxIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiAjZmZmOwogICAgICB9CgogICAgICAuY2xzLTIgewogICAgICAgIGZpbGw6IHVybCgjbGluZWFyLWdyYWRpZW50KTsKICAgICAgICBmaWxsLXJ1bGU6IGV2ZW5vZGQ7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImxpbmVhci1ncmFkaWVudCIgeDE9IjU5LjI3IiB5MT0iMi43NCIgeDI9IjEyLjQiIHkyPSI1OS4xMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNhNDQ1YjIiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjAxNDZlIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Im0zMy42MSwwYzUuOTQsMCwxMS41MywxLjU1LDE2LjM3LDQuMjVsLTYuOSwxMS40NS0uNTMtLjI3Yy0yLjY5LTEuMzMtNS43My0yLjA3LTguOTMtMi4wN2gtLjYzYy0zLjc5LjEzLTcuMzIsMS4yOC0xMC4zLDMuMjFINC42NGwuMzEtLjUxQzEwLjg1LDYuNDMsMjEuNDgsMCwzMy42MSwwWm0yNS42NiwyLjczbC0yNi4yNSw0Mi45LTEzLjUtMjIuMjloLTguNDRsLTMuMTMtNC44NGgxNC4yMWwxMS4wNiwxNy4zMkw1My4xNiwyLjczaDYuMTFaTTE4LjE4LDI1LjMzbDE0LjkyLDIzLjk4LDE0LjY0LTIzLjk4aDUuOTRsLTIwLjY0LDMzLjY5TDEyLjQsMjUuMzNoNS43OFptMzkuMDctMTUuNTlsLjQ1LjQ2YzUuODQsNi4wMSw5LjQ1LDE0LjE4LDkuNSwyMy4yMXYuOTdjLS40MSwxOC4yMS0xNS4zLDMyLjg1LTMzLjYxLDMyLjg1aC0uNTZDMTQuNzUsNjYuOTEsMCw1MS45OCwwLDMzLjYxdi0uNzZjLjE0LTUuODUsMS43Ni0xMS4zMyw0LjUyLTE2LjA3bDkuMDMsMTQuMTItLjA4LjY3Yy0uMDcuNjctLjEsMS4zNS0uMSwyLjA0di40OWMuMjEsOC42Miw1LjgxLDE1LjkxLDEzLjU1LDE4LjYybDQuNDgsNy4zLDEuNjUsMi43LDEuNjUtMi43LDQuMjEtNi44Ny40NS0uMTNjOC4zOC0yLjQ4LDE0LjQ5LTEwLjIzLDE0LjQ5LTE5LjQxdi0uNzFjLS4wNS0xLjE4LS4xOS0yLjMyLS40My0zLjQ0bDEuOTEtMy4xMiwxLjgxLTIuOTVoLTYuMDZsLS4zNi0uNTljLS4yNC0uMzktLjUtLjc2LS43Ny0xLjEzbDcuMy0xMS45M1oiLz4KICA8Zz4KICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0ibTk5LjkxLDI1LjI4aDIuNTVsLTcuMzMsMjAuMzVoLTIuMzRsLTcuMjktMjAuMzVoMi41bDQuNjgsMTMuMTdjLjU0LDEuNTEuOTYsMi45OCwxLjI4LDQuNDEuMzMtMS41Ljc3LTMsMS4zMS00LjQ5bDQuNjUtMTMuMDhaIi8+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Im0xMjUuNDMsNDUuNjNoLTExLjM0di0yMC4zNWgxMS4zNHYyLjFoLTguOTh2Ni41Nmg4LjQzdjIuMDloLTguNDN2Ny40OWg4Ljk4djIuMTJaIi8+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Im0xNDEuMTQsMzcuMTZ2OC40NmgtMi4zN3YtMjAuMzVoNS41OGMyLjUsMCw0LjM0LjQ4LDUuNTMsMS40MywxLjE5Ljk2LDEuNzksMi4zOSwxLjc5LDQuMzEsMCwyLjY5LTEuMzYsNC41MS00LjA5LDUuNDZsNS41Myw5LjE0aC0yLjhsLTQuOTMtOC40NmgtNC4yNFptMC0yLjAzaDMuMjRjMS42NywwLDIuODktLjMzLDMuNjctMSwuNzgtLjY2LDEuMTctMS42NiwxLjE3LTIuOTlzLS40LTIuMzEtMS4xOS0yLjkxYy0uNzktLjU5LTIuMDctLjg5LTMuODItLjg5aC0zLjA4djcuNzhaIi8+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Im0xNzYuNzEsNDAuMjFjMCwxLjc5LS42NSwzLjE5LTEuOTUsNC4xOS0xLjMsMS0zLjA2LDEuNS01LjI5LDEuNS0yLjQxLDAtNC4yNy0uMzEtNS41Ny0uOTN2LTIuMjhjLjg0LjM1LDEuNzQuNjMsMi43My44My45OC4yLDEuOTYuMzEsMi45Mi4zMSwxLjU4LDAsMi43Ni0uMywzLjU2LS45LjgtLjYsMS4yLTEuNDMsMS4yLTIuNSwwLS43LS4xNC0xLjI4LS40Mi0xLjczLS4yOC0uNDUtLjc2LS44Ny0xLjQyLTEuMjUtLjY2LS4zOC0xLjY3LS44MS0zLjAzLTEuMjktMS44OS0uNjgtMy4yNC0xLjQ4LTQuMDYtMi40MS0uODEtLjkzLTEuMjItMi4xNC0xLjIyLTMuNjMsMC0xLjU3LjU5LTIuODIsMS43Ny0zLjc0LDEuMTgtLjkzLDIuNzQtMS4zOSw0LjY4LTEuMzlzMy44OC4zNyw1LjU4LDEuMTFsLS43NCwyLjA2Yy0xLjY4LS43LTMuMzEtMS4wNi00LjktMS4wNi0xLjI1LDAtMi4yMy4yNy0yLjk0LjgxLS43MS41NC0xLjA2LDEuMjktMS4wNiwyLjI0LDAsLjcxLjEzLDEuMjguMzksMS43My4yNi40NS43Ljg2LDEuMzEsMS4yNC42Mi4zOCwxLjU2Ljc5LDIuODMsMS4yNSwyLjEzLjc2LDMuNiwxLjU4LDQuNDEsMi40NS44Ljg3LDEuMiwyLDEuMiwzLjRaIi8+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Im0yMDIuNSw0NS42M2wtMi41My02LjQ3aC04LjE2bC0yLjUsNi40N2gtMi4zOWw4LjA0LTIwLjQzaDEuOTlsOCwyMC40M2gtMi40NVptLTMuMjctOC42bC0yLjM3LTYuM2MtLjMxLS44LS42Mi0xLjc4LS45NS0yLjk0LS4yLjg5LS41LDEuODctLjg4LDIuOTRsLTIuMzksNi4zaDYuNThaIi8+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Im0yMzIuNDcsNDUuNjNoLTIuN2wtMTEuMTItMTcuMDhoLS4xMWMuMTUsMiwuMjIsMy44NC4yMiw1LjUxdjExLjU3aC0yLjE5di0yMC4zNWgyLjY3bDExLjA5LDE3LjAxaC4xMWMtLjAyLS4yNS0uMDYtMS4wNi0uMTMtMi40Mi0uMDYtMS4zNi0uMDktMi4zMy0uMDctMi45MXYtMTEuNjhoMi4yMXYyMC4zNVoiLz4KICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0ibTI1My4xNyw0NS42M2gtMi4zN3YtMTguMjVoLTYuNDR2LTIuMWgxNS4yNXYyLjFoLTYuNDR2MTguMjVaIi8+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Im0yODYuODcsMjUuMjh2MTMuMTdjMCwyLjMyLS43LDQuMTQtMi4xLDUuNDctMS40LDEuMzMtMy4zMywxLjk5LTUuNzgsMS45OXMtNC4zNC0uNjctNS42OC0yYy0xLjM0LTEuMzQtMi4wMS0zLjE3LTIuMDEtNS41MXYtMTMuMTFoMi4zN3YxMy4yOGMwLDEuNy40NiwzLDEuMzksMy45MS45My45MSwyLjI5LDEuMzYsNC4wOSwxLjM2czMuMDQtLjQ2LDMuOTctMS4zN2MuOTMtLjkxLDEuMzktMi4yMiwxLjM5LTMuOTN2LTEzLjI1aDIuMzdaIi8+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Im0zMTIuNTgsNDAuMjFjMCwxLjc5LS42NSwzLjE5LTEuOTUsNC4xOS0xLjMsMS0zLjA2LDEuNS01LjI5LDEuNS0yLjQxLDAtNC4yNy0uMzEtNS41Ny0uOTN2LTIuMjhjLjg0LjM1LDEuNzQuNjMsMi43My44My45OC4yLDEuOTYuMzEsMi45Mi4zMSwxLjU4LDAsMi43Ni0uMywzLjU2LS45LjgtLjYsMS4yLTEuNDMsMS4yLTIuNSwwLS43LS4xNC0xLjI4LS40Mi0xLjczLS4yOC0uNDUtLjc2LS44Ny0xLjQyLTEuMjUtLjY2LS4zOC0xLjY3LS44MS0zLjAzLTEuMjktMS44OS0uNjgtMy4yNC0xLjQ4LTQuMDYtMi40MS0uODEtLjkzLTEuMjItMi4xNC0xLjIyLTMuNjMsMC0xLjU3LjU5LTIuODIsMS43Ny0zLjc0LDEuMTgtLjkzLDIuNzQtMS4zOSw0LjY4LTEuMzlzMy44OC4zNyw1LjU4LDEuMTFsLS43NCwyLjA2Yy0xLjY4LS43LTMuMzEtMS4wNi00LjktMS4wNi0xLjI1LDAtMi4yMy4yNy0yLjk0LjgxLS43MS41NC0xLjA2LDEuMjktMS4wNiwyLjI0LDAsLjcxLjEzLDEuMjguMzksMS43My4yNi40NS43Ljg2LDEuMzEsMS4yNC42Mi4zOCwxLjU2Ljc5LDIuODMsMS4yNSwyLjEzLjc2LDMuNiwxLjU4LDQuNDEsMi40NS44Ljg3LDEuMiwyLDEuMiwzLjRaIi8+CiAgPC9nPgo8L3N2Zz4=" alt="Versantus" height="26"></a>
       <h1>Wooden Binary Counter</h1>
     </div>
     <nav class="tabs" aria-label="Views">
@@ -181,6 +199,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
       <a href="#build" id="tab-build">Build your own</a>
       <a href="#prompts" id="tab-prompts">Prompts used</a>
     </nav>
+    <a class="ghlink" href="https://github.com/versantus/mechanical-binary-counter" target="_blank" rel="noopener" aria-label="View source on GitHub"><svg class="gh" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg><span>GitHub</span></a>
   </header>
 
   <div id="view-model" class="view">
@@ -305,6 +324,11 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
     </ol>
     <p class="cta"><a href="#model">← Back to the model</a></p>
   </article>
+
+  <footer class="site-foot">
+    <p>Made with love by <a href="https://versantus.co.uk" target="_blank" rel="noopener">Versantus</a></p>
+    <p><a href="https://github.com/versantus/mechanical-binary-counter" target="_blank" rel="noopener"><svg class="gh" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>View source on GitHub</a></p>
+  </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
