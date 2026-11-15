@@ -161,7 +161,9 @@ td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-
 .ikea .cap { margin: 0; font-size: 14px; color: var(--muted); }
 .whatis h2 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 4px; }
 .whatis p { margin: 0; max-width: 72ch; color: var(--muted); }
-.loading { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; color: var(--muted); font-family: var(--mono); font-size: 13px; pointer-events: none; }
+.loading { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; color: #aab0b9; font-family: var(--mono); font-size: 13px; pointer-events: none; }
+.hint-dark { color: #9aa1ab; z-index: 1; }
+#stage-r { background: #26272d; border-color: #26272d; }
 .nogl { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
 .brand { display: inline-block; line-height: 0; margin-bottom: 6px; align-self: start; justify-self: start; }
 .vlogo { height: 26px; width: auto; display: block; }
@@ -207,7 +209,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   </section>
     <div class="stage" id="stage-r" tabindex="0" aria-label="Rendered 3D model of the wooden binary counter. Press Space to push the right-hand block.">
       <p class="loading" id="r-loading">Loading the rendered model…</p>
-      <span class="hint">click right block to push · click others to flip by hand · drag to turn · scroll to zoom</span>
+      <span class="hint hint-dark">click right block to push · click others to flip by hand · drag to turn · scroll to zoom</span>
     </div>
     <div class="panel">
       <div class="controls">
@@ -215,6 +217,7 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
         <button id="r-auto" aria-pressed="false">Count continuously</button>
         <button id="r-reset">Reset to zero</button>
         <button id="r-view">Front view</button>
+        <button id="r-close">Close-up</button>
       </div>
       <div class="readout" aria-live="polite">
         <div><span class="label">Binary</span><span class="val bits" id="r-bin">0010 0111</span></div>
@@ -678,46 +681,59 @@ if (!location.hash || location.hash !== '#build') window.renderedView.show();
 
 async function boot() {
   const loadingEl = document.getElementById('r-loading');
-  let THREE, GLTFLoader, OrbitControls, RoomEnvironment;
+  let THREE, GLTFLoader, OrbitControls, RoomEnvironment, EffectComposer, RenderPass, GTAOPass, OutputPass;
+  // contact shadows (GTAO) cost GPU time; skip them on touch devices
+  const fancy = !matchMedia('(pointer: coarse)').matches;
   try {
     THREE = await import('three');
     ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
     ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
     ({ RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js'));
+    if (fancy) {
+      ({ EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js'));
+      ({ RenderPass } = await import('three/addons/postprocessing/RenderPass.js'));
+      ({ GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js'));
+      ({ OutputPass } = await import('three/addons/postprocessing/OutputPass.js'));
+    }
   } catch (e) { loadingEl.textContent = 'Could not load the 3D library. Check your connection and reload.'; return; }
 
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+  try { renderer = new THREE.WebGLRenderer({ antialias: true }); }
   catch (e) { loadingEl.textContent = 'This browser could not start 3D graphics (WebGL), so the rendered model cannot be shown.'; return; }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0x000000, 0);
   stage.prepend(renderer.domElement);
 
+  // a dark studio like the stills: backdrop, desk fading into fog, a pool of warm light
   const scene = new THREE.Scene();
+  const STUDIO = 0x26272d;
+  scene.background = new THREE.Color(STUDIO);
+  scene.fog = new THREE.Fog(STUDIO, 0.75, 1.55);
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environmentIntensity = 0.4;
 
   // lights placed like the Blender key, fill and rim (metres, y up, z toward the viewer)
-  const key = new THREE.DirectionalLight(0xffeedd, 3.2);
+  const key = new THREE.DirectionalLight(0xffeedd, 2.4);
   key.position.set(-0.55, 0.75, 0.75); key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 5; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.0015;
   Object.assign(key.shadow.camera, { left: -0.32, right: 0.32, top: 0.24, bottom: -0.1, near: 0.2, far: 2.5 });
   scene.add(key);
   const rim = new THREE.DirectionalLight(0xffe9d2, 1.1); rim.position.set(0.2, 0.55, -0.8); scene.add(rim);
   const fill = new THREE.DirectionalLight(0xe6eeff, 0.35); fill.position.set(0.8, 0.3, 0.5); scene.add(fill);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.ShadowMaterial({ opacity: 0.28 }));
-  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+  const desk = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshStandardMaterial({ color: 0x2b2c31, roughness: 0.42, metalness: 0 }));
+  desk.rotation.x = -Math.PI / 2; desk.receiveShadow = true; scene.add(desk);
+  const pool = new THREE.SpotLight(0xffe8cc, 3.5, 2.2, 0.55, 0.9, 1.6);
+  pool.position.set(-0.1, 0.9, 0.35); pool.target.position.set(0, 0, 0); scene.add(pool, pool.target);
 
   const camera = new THREE.PerspectiveCamera(30, 2, 0.01, 20);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 0.07, 0);
   controls.enableDamping = true; controls.enablePan = false;
-  controls.minDistance = 0.18; controls.maxDistance = 2.2; controls.maxPolarAngle = Math.PI * 0.6;
+  controls.minDistance = 0.12; controls.maxDistance = 2.2; controls.maxPolarAngle = Math.PI * 0.6;
   const viewDir = new THREE.Vector3(-0.24, 0.27, 0.9).normalize();
 
   const gltf = await new GLTFLoader().loadAsync('assets/counter.gltf.json').catch(() => null);
@@ -799,16 +815,30 @@ async function boot() {
     const vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
     return Math.max(0.25 / Math.tan(hf / 2), 0.09 / Math.tan(vf / 2)) + 0.04;
   }
-  function frontView(animate) {
-    const to = controls.target.clone().add(viewDir.clone().multiplyScalar(fitDistance()));
-    if (!animate) { camera.position.copy(to); return; }
-    camAnim = { from: camera.position.clone(), to, t0: performance.now() };
+  const HOME = new THREE.Vector3(0, 0.07, 0);
+  function moveTo(pos, target, animate = true) {
+    if (!animate) { camera.position.copy(pos); controls.target.copy(target); return; }
+    camAnim = { from: camera.position.clone(), to: pos, tFrom: controls.target.clone(), tTo: target, t0: performance.now() };
   }
+  function frontView(animate) { moveTo(HOME.clone().add(viewDir.clone().multiplyScalar(fitDistance())), HOME.clone(), animate); }
   document.getElementById('r-view').onclick = () => frontView(true);
+  // the gates, pins and stop pegs on the right-hand blocks, as in the close-up still
+  document.getElementById('r-close').onclick = () => moveTo(new THREE.Vector3(0.27, 0.16, 0.3), new THREE.Vector3(0.1, 0.1, 0.0));
   function resize() {
     const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    if (composer) { composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h); }
     if (camera.position.lengthSq() < 1e-6) frontView(false);
+  }
+  let composer = null;
+  if (fancy) {
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const gtao = new GTAOPass(scene, camera, 800, 400);
+    gtao.updateGtaoMaterial({ radius: 0.025, distanceExponent: 1.5, thickness: 0.02, scale: 1.2, samples: 16 });
+    gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 4, rings: 2, samples: 16 });
+    composer.addPass(gtao);
+    composer.addPass(new OutputPass());
   }
   new ResizeObserver(resize).observe(stage); resize();
 
@@ -839,9 +869,11 @@ async function boot() {
     }
     if (camAnim) {
       const p = Math.min(1, (now - camAnim.t0) / 700), e = 1 - Math.pow(1 - p, 3);
-      camera.position.lerpVectors(camAnim.from, camAnim.to, e); if (p >= 1) camAnim = null;
+      camera.position.lerpVectors(camAnim.from, camAnim.to, e);
+      controls.target.lerpVectors(camAnim.tFrom, camAnim.tTo, e); if (p >= 1) camAnim = null;
     }
-    readout(); controls.update(); renderer.render(scene, camera);
+    readout(); controls.update();
+    composer ? composer.render() : renderer.render(scene, camera);
   }
   requestAnimationFrame(tick);
   api = { resize, setAuto };
