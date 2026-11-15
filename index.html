@@ -164,6 +164,8 @@ td:nth-child(3), td.n { font-family: var(--mono); font-variant-numeric: tabular-
 .promptlist .res { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
 .prompts .intro p { max-width: 68ch; margin: 0; color: var(--muted); }
 .prompts h2.big { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px); margin: 0 0 8px; }
+.whatis h2 { font-family: var(--display); font-weight: 500; font-size: 17px; margin: 0 0 4px; }
+.whatis p { margin: 0; max-width: 72ch; color: var(--muted); }
 kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; }
 @media (max-width: 560px) { .stage { aspect-ratio: 4 / 3; } .val { font-size: 18px; } }
 </style>
@@ -182,6 +184,11 @@ kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); 
   </header>
 
   <div id="view-model" class="view">
+
+  <section class="whatis">
+    <h2>What is this?</h2>
+    <p>A binary counter made of wood, with no electronics. Each of the eight blocks is one binary digit, worth 1, 2, 4 and so on up to 128, reading from the right. Add up the values of the blocks showing 1 and you have the number. Push the right-hand block to add one. If it was already a 1, it turns back to 0 and its gate carries the next block over, just as you carry a 1 when adding on paper. Eight blocks count from 0 to 255.</p>
+  </section>
 
   <div class="stage" id="stage" tabindex="0" aria-label="3D model of an eight-bit wooden binary counter. Press Space to push the right-hand block.">
     <span class="hint">click right block to push · click others to flip by hand · drag to turn</span>
