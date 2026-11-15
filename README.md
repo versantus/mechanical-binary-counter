@@ -4,6 +4,8 @@ An interactive 3D model and build guide for an eight-bit wooden binary counter, 
 
 Eight pine blocks hang on a dowel. Each has a 0 on the front, a 1 on the back and its place value (1 to 128) on the top and bottom edges. Every 1 face carries a small walnut gate. When the 1 is at the back, the gate hangs down out of the way. When the block turns over, the gate stands up, falls left and locks across the next block, ready to carry it on the next push.
 
+Live page: https://versantus.github.io/mechanical-binary-counter/
+
 ## What's in the page
 
 - **Model:** a 3D counter built with three.js. Push the right-hand block (or press Space) to count, click other blocks to flip them by hand, and drag to turn the model.
