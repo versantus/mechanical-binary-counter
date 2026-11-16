@@ -738,8 +738,35 @@ async function boot() {
   controls.minDistance = 0.12; controls.maxDistance = 2.2; controls.maxPolarAngle = Math.PI * 0.6;
   const viewDir = new THREE.Vector3(-0.24, 0.27, 0.9).normalize();
 
-  const gltf = await new GLTFLoader().loadAsync('assets/counter.gltf.json').catch(() => null);
-  if (!gltf) { loadingEl.textContent = 'Could not load the model file.'; return; }
+  // Some hosts (the Claude artifact sandbox) block fetch() of data: URLs, so decode the embedded
+  // buffer here, pack it into an in-memory GLB, and hand images over as data: URLs for <img> to load.
+  async function loadModel(url) {
+    const json = await (await fetch(url)).json();
+    const b64 = json.buffers[0].uri.split(',')[1];
+    const raw = atob(b64), bin = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bin[i] = raw.charCodeAt(i);
+    for (const img of json.images || []) {
+      if (img.bufferView === undefined) continue;
+      const bv = json.bufferViews[img.bufferView], bytes = bin.subarray(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength);
+      let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      img.uri = 'data:' + (img.mimeType || 'image/jpeg') + ';base64,' + btoa(s);
+      delete img.bufferView; delete img.mimeType;
+    }
+    delete json.buffers[0].uri;
+    const enc = new TextEncoder().encode(JSON.stringify(json));
+    const jLen = (enc.length + 3) & ~3, bLen = (bin.length + 3) & ~3;
+    const glb = new Uint8Array(12 + 8 + jLen + 8 + bLen), dv = new DataView(glb.buffer);
+    dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, glb.length, true);
+    dv.setUint32(12, jLen, true); dv.setUint32(16, 0x4E4F534A, true);
+    glb.fill(0x20, 20, 20 + jLen); glb.set(enc, 20);
+    const o = 20 + jLen; dv.setUint32(o, bLen, true); dv.setUint32(o + 4, 0x004E4942, true); glb.set(bin, o + 8);
+    const loader = new GLTFLoader();
+    loader.register(parser => { parser.textureLoader = new THREE.TextureLoader(parser.options.manager); return { name: 'img-element-textures' }; });
+    return new Promise((res, rej) => loader.parse(glb.buffer, '', res, rej));
+  }
+  let loadErr = '';
+  const gltf = await loadModel('assets/counter.gltf.json').catch(e => { loadErr = String(e && (e.message || e)); return null; });
+  if (!gltf) { loadingEl.textContent = 'Could not load the model file. (' + loadErr.slice(0, 160) + ')'; return; }
   gltf.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (o.material.map) o.material.map.anisotropy = 8; } });
   scene.add(gltf.scene);
   loadingEl.remove();
